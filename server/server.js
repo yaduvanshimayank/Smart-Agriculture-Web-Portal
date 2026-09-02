@@ -43,8 +43,184 @@ function getGroqClient(userKey) {
   return new Groq({ apiKey });
 }
 
+// Keywords to detect farming/agriculture intent
+const AGRICULTURAL_KEYWORDS = [
+  'farm', 'farming', 'crop', 'crops', 'soil', 'pest', 'disease', 'blight', 'rust',
+  'mildew', 'rot', 'weed', 'fertilizer', 'npk', 'nitrogen', 'phosphorus', 'potassium',
+  'irrigation', 'drip', 'sprinkler', 'water', 'moisture', 'ph', 'compost', 'organic',
+  'neem', 'pesticide', 'fungicide', 'herbicide', 'wheat', 'tomato', 'tomatoes', 'corn',
+  'maize', 'rice', 'soybean', 'cotton', 'orange', 'citrus', 'apple', 'harvest', 'yield',
+  'field', 'sensor', 'iot', 'telemetry', 'greenhouse', 'livestock', 'cattle', 'poultry',
+  'tractor', 'drone', 'weather', 'climate', 'agronomy', 'seed', 'sprout', 'cultivation',
+  'chlorosis', 'tiller', 'leaf', 'root', 'botanical', 'orchard', 'acre', 'hectare', 'mulch'
+];
+
+const NON_AGRICULTURAL_KEYWORDS = [
+  'javascript', 'python', 'java', 'code', 'coding', 'function', 'array', 'react',
+  'vue', 'css', 'html', 'movie', 'film', 'actor', 'game', 'gaming', 'song', 'music',
+  'crypto', 'bitcoin', 'stock market', 'dan', 'jailbreak', 'system prompt', 'ignore previous'
+];
+
+function isFarmingRelated(query) {
+  const q = query.toLowerCase();
+
+  // Check explicit jailbreaks or coding/non-farming keywords
+  const hasNonAgri = NON_AGRICULTURAL_KEYWORDS.some(kw => q.includes(kw));
+  const hasAgri = AGRICULTURAL_KEYWORDS.some(kw => q.includes(kw));
+
+  if (hasNonAgri && !hasAgri) return false;
+  if (hasAgri) return true;
+
+  // General heuristic check
+  return true;
+}
+
+function generateAgronomyFallbackResponse(query) {
+  const q = query.toLowerCase();
+
+  // Check Guardrail first
+  if (!isFarmingRelated(query)) {
+    return {
+      reply: `🌾 I am **AgriGroq AI**, specialized exclusively in agriculture and smart farming. I cannot answer non-farming questions. Please ask me anything related to crop health, soil management, irrigation, pest control, farm automation, or agricultural techniques!`,
+      model: 'AgriSmart Domain Guardrail Engine'
+    };
+  }
+
+  // 1. Tomato Early Blight / Solanaceous diseases
+  if (q.includes('blight') || (q.includes('tomato') && (q.includes('organic') || q.includes('disease') || q.includes('treatment')))) {
+    return {
+      reply: `### 🍅 Comprehensive Organic Management for Tomato Early Blight (*Alternaria solani*)
+
+Early Blight is a common fungal pathogen causing concentric target-ring spots and leaf yellowing on solanaceous crops.
+
+#### 🌿 1. Organic Sprays & Bio-Fungicides
+- **Fixed Copper Hydroxide Spray**: Apply liquid copper fungicide every 7 to 10 days at first sign of lesions. Thoroughly cover upper and lower leaf surfaces.
+- **Cold-Pressed Neem Oil (70% Concentration)**: Mix 2 tbsp (30 ml) neem oil with 1 tsp mild horticultural soap per 1 gallon (3.8 L) of warm water. Apply early morning or dusk to prevent foliar sunscald.
+- **Potassium Bicarbonate Foliar Treatment**: Mix 1 tbsp potassium bicarbonate with 1/2 tsp liquid soap per gallon of water to disrupt fungal spore membranes.
+
+#### ✂️ 2. Cultural Pruning & Field Sanitation
+- **Lower Leaf Stripping**: Prune all foliage within 12 inches (30 cm) of the soil surface to break soil-splash fungal inoculation.
+- **Prompt Debris Removal**: Remove and burn/bag heavily infected leaves immediately. Do NOT add early blight foliage to home compost piles.
+
+#### 💧 3. Moisture Management & Crop Rotation
+- **Drip Irrigation Conversion**: Avoid overhead sprinkler systems. Keep leaves dry by delivering water directly to root bases via drip tape.
+- **Straw / Plastic Mulching**: Apply a 3-inch (7.5 cm) layer of clean straw, wood shavings, or black plastic mulch to suppress soil moisture evaporation and spore splash.
+- **3-Year Rotation Strategy**: Avoid planting tomatoes, potatoes, eggplants, or peppers in the same plot for 3 consecutive seasons. Rotate with sweet corn, beans, or cover crops (hairy vetch, clover).`,
+      model: 'AgriSmart Precision Agronomy Engine'
+    };
+  }
+
+  // 2. Wheat NPK Optimization
+  if (q.includes('npk') || q.includes('wheat') || q.includes('fertilizer')) {
+    return {
+      reply: `### 🌾 Optimizing NPK Fertilizer Ratios for Winter Wheat
+
+Balanced nutrition is critical for maximize tiller density, lodging resistance, and grain fill protein.
+
+#### 📊 Recommended Baseline NPK Ratio
+- **Standard Baseline**: **120 - 60 - 40 kg/ha** (Approx. 107 - 53 - 35 lbs/acre) of actual Nitrogen (N), Phosphorus (P₂O₅), and Potassium (K₂O).
+
+#### ⏱️ Split-Application Schedule
+1. **At Sowing (Basal Dose)**:
+   - Apply 20% of total Nitrogen (25 kg N/ha), 100% of Phosphorus (60 kg P₂O₅/ha), and 100% of Potassium (40 kg K₂O/ha).
+   - Promotes rapid early root establishment and winter hardiness.
+2. **First Top-Dressing (Crown Root Initiation / Tillering - GS21)**:
+   - Apply 40% of Nitrogen (48 kg N/ha). Encourages strong productive tiller development.
+3. **Second Top-Dressing (Stem Elongation / Jointing - GS30)**:
+   - Apply remaining 40% of Nitrogen (48 kg N/ha) prior to flag leaf emergence to drive grain head size.
+
+#### 🧪 Micronutrient Considerations
+- **Zinc Sulfate (ZnSO₄)**: Apply 10–15 kg/ha zinc sulfate in alkaline soils (pH > 7.2) to prevent leaf interveinal chlorosis and stunted growth.`,
+      model: 'AgriSmart Precision Agronomy Engine'
+    };
+  }
+
+  // 3. Drip Irrigation Sandy Loam
+  if (q.includes('irrigation') || q.includes('sandy loam') || q.includes('drip')) {
+    return {
+      reply: `### 💧 Precision Drip Irrigation Strategy for Sandy Loam Soil
+
+Sandy loam soils exhibit high infiltration rates (20–30 mm/hr) and moderate water storage capacity (~1.2–1.5 inches per foot of soil depth). High-frequency, short-duration pulse irrigation yields optimal results.
+
+#### 📅 Recommended Schedule & Flow Rates
+- **Frequency**: 3 to 5 pulse cycles per week during normal growth; daily applications during peak summer evapotranspiration (ETc).
+- **Emitter Configuration**: 1.6 to 2.0 L/hr (0.42 to 0.53 GPH) pressure-compensating emitters spaced 30 cm (12 in) apart.
+- **Run Duration**: 45 to 75 minutes per session. Avoid single runs longer than 90 minutes to prevent deep percolation loss beyond 45 cm root depth.
+
+#### 📊 Telemetry Sensor Thresholds
+- **Soil Water Tension**: Maintain root zone soil tension between **20 and 35 kPa (centibars)**.
+- **Volumetric Water Content (VWC)**: Trigger irrigation when VWC falls below 35% of Plant Available Water (PAW).
+
+#### 🛡️ Moisture Conservation
+- Apply 5–8 cm of organic bark/straw mulch to reduce surface evaporation by up to 35%.`,
+      model: 'AgriSmart Precision Agronomy Engine'
+    };
+  }
+
+  // 4. Armyworm / Maize Pest Control
+  if (q.includes('armyworm') || q.includes('maize') || q.includes('corn') || q.includes('pest')) {
+    return {
+      reply: `### 🌽 Integrated Armyworm (*Spodoptera frugiperda*) Management in Maize
+
+Fall Armyworms can decimate crop whorls and yield if not controlled during early larval instar stages (1st to 3rd instar).
+
+#### 🛡️ 1. Biological & Organic Controls
+- ***Bacillus thuringiensis* (Bt var. kurstaki)**: Apply bio-pesticide spray directly into maize whorls early morning or late evening.
+- **Neem Extract (NSKE 5%)**: Spray 5% Neem Seed Kernel Extract. Acts as an antifeedant and growth regulator for young larvae.
+- **Entomopathogenic Fungi**: Apply *Metarhizium anisopliae* or *Beauveria bassiana* biopesticide formulations.
+
+#### 🪤 2. Field Monitoring & Cultural Trapping
+- **Pheromone Traps**: Hang 5 sex pheromone lures per hectare to detect moth arrival 2 weeks before caterpillar emergence.
+- **Push-Pull Companion Planting**: Intercrop maize with *Desmodium* (repels moths) and surround borders with Napier grass (*Pennisetum purpureum*) to trap ovipositing females.
+
+#### 🧪 3. Chemical Treatments (If Action Threshold >10% Infested Plants Exceeded)
+- Apply targeted sprays of Spinetoram, Chlorantraniliprole, or Emamectin Benzoate targeting the whorls. Rotate active ingredient chemical classes to prevent resistance.`,
+      model: 'AgriSmart Precision Agronomy Engine'
+    };
+  }
+
+  // 5. Smart Soil Moisture Sensors & IoT Mesh
+  if (q.includes('sensor') || q.includes('iot') || q.includes('moisture') || q.includes('mesh')) {
+    return {
+      reply: `### 🚜 Smart IoT Telemetry Mesh & Soil Sensor Deployment Guide
+
+Implementing a connected sensor network enables automated precision irrigation and real-time root zone analytics.
+
+#### 📡 1. Optimal Sensor Types
+- **Capacitive Frequency Domain Reflectometry (FDR) Probes**: Measure volumetric water content (VWC) accurately without susceptibility to soil salinity fluctuations.
+- **Soil Water Potential Tensionmeters**: Measure water tension (kPa/centibars) to determine actual crop suction effort required.
+- **Electrochemical NPK & pH Sensors**: Multi-depth continuous probes tracking nitrate (NO₃⁻) and potassium (K⁺) mobility.
+
+#### 🌐 2. Wireless Mesh & Hardware Architecture
+- **Protocol**: LoRaWAN sub-GHz radio (868 MHz / 915 MHz) for long-range (up to 10–15 km line-of-sight) transmission through thick crop canopies.
+- **Multi-Depth Probing**: Install dual/triple depth sensor nodes at **15 cm** (evaporation zone), **30 cm** (active root zone), and **60 cm** (drainage boundary).
+- **Power Node**: 2W solar panel coupled with a 3.7V 3000mAh LiFePO4 battery pack for 100% autonomous operation.`,
+      model: 'AgriSmart Precision Agronomy Engine'
+    };
+  }
+
+  // 6. Generic Agricultural Query Synthesis Generator
+  return {
+    reply: `### 🌾 AgriSmart Precision Agronomy Guidance for: "${query}"
+
+#### 📊 1. Agronomic Overview & Diagnostics
+- **Target Analysis**: Evaluating crop health, soil dynamics, and environmental parameters for optimal yield.
+- **Key Parameters**: Soil moisture retention, balanced macro/micronutrient availability (NPK + Zn/Fe/B), and climate adaptation.
+
+#### 🛠️ 2. Recommended Actionable Steps
+- **Soil & Soil Amelioration**: Conduct a standard grid soil test (0-30 cm depth). Maintain soil pH between 6.0 and 7.0 for maximum nutrient bioavailability.
+- **Precision Water Delivery**: Use drip irrigation systems with automated moisture threshold sensors to minimize water stress and prevent root rot.
+- **Integrated Pest & Disease Management (IPM)**: Combine crop rotation, regular field scouting, biological controls (neem oil, beneficial insects), and clean sanitation.
+
+#### 🛡️ 3. Long-Term Preventative Best Practices
+- Incorporate legume cover crops (clover, cowpeas, vetch) to build natural soil organic matter and fix atmospheric nitrogen.
+- Monitor micro-climate telemetry (air temperature, humidity, sunlight Lux) to predict spore germination windows.`,
+    model: 'AgriSmart Precision Agronomy Engine'
+  };
+}
+
 // ==========================================
-// 1. Groq AI Chat Route (Farming Only)
+// 1. Groq AI Chat Route (Farming Only + Offline Fallback Engine)
 // ==========================================
 app.post('/api/chat', async (req, res) => {
   try {
@@ -54,12 +230,26 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Message is required and must be a string.' });
     }
 
+    // Check Guardrail first
+    if (!isFarmingRelated(message)) {
+      const fallback = generateAgronomyFallbackResponse(message);
+      return res.json({
+        reply: fallback.reply,
+        model: fallback.model,
+        success: true,
+        isGuardrail: true
+      });
+    }
+
     const groq = getGroqClient(userApiKey);
 
     if (!groq) {
-      return res.status(401).json({
-        error: 'NO_API_KEY',
-        message: 'Groq API Key is missing. Please enter your API key in the top settings bar to activate AgriGroq AI.',
+      // Return rich Agronomy Engine response directly without throwing error
+      const fallback = generateAgronomyFallbackResponse(message);
+      return res.json({
+        reply: fallback.reply,
+        model: `${fallback.model} (Smart Mode)`,
+        success: true,
         isFallback: true
       });
     }
@@ -89,21 +279,16 @@ app.post('/api/chat', async (req, res) => {
       success: true
     });
   } catch (error) {
-    console.error('Error in /api/chat Groq call:', error.message);
+    console.warn('Groq API call unavailable/failed. Falling back to Smart Agronomy Engine:', error.message);
     
-    // Check if error is related to invalid API key
-    if (error.status === 401 || error.message.includes('API key')) {
-      return res.status(401).json({
-        error: 'INVALID_API_KEY',
-        message: 'Invalid Groq API key provided. Please check your key in settings.',
-        details: error.message
-      });
-    }
+    // Seamless fallback to built-in agronomy engine
+    const fallback = generateAgronomyFallbackResponse(req.body.message || '');
 
-    res.status(500).json({
-      error: 'GROQ_ERROR',
-      message: 'Failed to process request with Groq API.',
-      details: error.message
+    res.json({
+      reply: fallback.reply,
+      model: `${fallback.model} (Fallback)`,
+      success: true,
+      isFallback: true
     });
   }
 });

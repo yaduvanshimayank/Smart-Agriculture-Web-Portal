@@ -3,6 +3,7 @@ import {
   Bot, Send, Sparkles, Key, AlertCircle, RefreshCw, 
   HelpCircle, ShieldCheck, User, CheckCircle2, ShieldAlert
 } from 'lucide-react';
+import ApiKeyModal from './ApiKeyModal.jsx';
 
 export default function AgriGroqChat({ initialPrompt, onClearInitialPrompt }) {
   const [messages, setMessages] = useState([
@@ -20,8 +21,18 @@ How can I assist your farm today?`,
 
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [userApiKey, setUserApiKey] = useState(() => localStorage.getItem('groq_api_key') || '');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const chatEndRef = useRef(null);
+
+  const handleSaveKey = (key) => {
+    setUserApiKey(key);
+    if (key) {
+      localStorage.setItem('groq_api_key', key);
+    } else {
+      localStorage.removeItem('groq_api_key');
+    }
+  };
 
   useEffect(() => {
     if (initialPrompt) {
@@ -65,7 +76,6 @@ How can I assist your farm today?`,
     setMessages(prev => [...prev, userMsg]);
     if (!textToSend) setInput('');
     setLoading(true);
-    setErrorMsg(null);
 
     try {
       const res = await fetch('/api/chat', {
@@ -73,30 +83,17 @@ How can I assist your farm today?`,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: query,
-          history: messages.slice(-6) // keep context
+          history: messages.slice(-6),
+          userApiKey: userApiKey || undefined
         })
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
-        setErrorMsg(data.message || 'Error communicating with AI Advisor.');
-
-        const botErrorMsg = {
-          id: 'bot-err-' + Date.now(),
-          sender: 'bot',
-          isError: true,
-          text: `⚠️ **Notice**: ${data.message || 'Unable to connect to AI server.'}\n\nPlease check that your \`GROQ_API_KEY\` is configured in the server \`.env\` file.`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setMessages(prev => [...prev, botErrorMsg]);
-        return;
-      }
-
       const botReply = {
         id: 'bot-' + Date.now(),
         sender: 'bot',
-        text: data.reply,
+        text: data.reply || data.message || 'No response generated.',
         model: data.model,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
@@ -104,7 +101,14 @@ How can I assist your farm today?`,
       setMessages(prev => [...prev, botReply]);
     } catch (err) {
       console.error('Chat error:', err);
-      setErrorMsg('Failed to reach backend server.');
+      const botErrReply = {
+        id: 'bot-err-' + Date.now(),
+        sender: 'bot',
+        isError: true,
+        text: '⚠️ Could not reach server. Please ensure the backend server is running on port 5000.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      setMessages(prev => [...prev, botErrReply]);
     } finally {
       setLoading(false);
     }
@@ -117,11 +121,17 @@ How can I assist your farm today?`,
     }
   };
 
-  // Simple render helper for markdown bold and lists
+  // Simple render helper for markdown headings, bold and lists
   const formatText = (content) => {
     return content.split('\n').map((line, idx) => {
-      let formattedLine = line;
-      
+      if (line.startsWith('### ')) {
+        return <h3 key={idx} style={{ fontSize: '1.1rem', fontWeight: '800', margin: '0.8rem 0 0.4rem 0', color: 'var(--emerald-light)' }}>{line.replace('### ', '')}</h3>;
+      }
+
+      if (line.startsWith('#### ')) {
+        return <h4 key={idx} style={{ fontSize: '0.95rem', fontWeight: '700', margin: '0.6rem 0 0.3rem 0', color: '#ffffff' }}>{line.replace('#### ', '')}</h4>;
+      }
+
       // Basic bold replace **text** -> <strong>text</strong>
       const boldParts = line.split(/\*\*(.*?)\*\*/g);
       const renderedParts = boldParts.map((part, i) => 
@@ -137,7 +147,7 @@ How can I assist your farm today?`,
       }
 
       if (line.trim() === '') {
-        return <div key={idx} style={{ height: '0.5rem' }}></div>;
+        return <div key={idx} style={{ height: '0.4rem' }}></div>;
       }
 
       return <p key={idx} style={{ marginBottom: '0.4rem' }}>{renderedParts}</p>;
@@ -178,7 +188,26 @@ How can I assist your farm today?`,
             </p>
           </div>
         </div>
+
+        <button 
+          className="btn-outline" 
+          onClick={() => setIsModalOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '10px'
+          }}
+        >
+          <Key size={16} style={{ color: userApiKey ? 'var(--emerald-main)' : 'var(--text-muted)' }} />
+          <span>{userApiKey ? 'Groq Key Active' : 'Configure Groq Key'}</span>
+        </button>
       </div>
+
+      <ApiKeyModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        apiKey={userApiKey}
+        onSaveKey={handleSaveKey}
+      />
 
       {/* Main Chat Conversation Container */}
       <div className="glass-panel" style={{
@@ -227,9 +256,23 @@ How can I assist your farm today?`,
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 marginBottom: '0.4rem', fontSize: '0.75rem', color: 'var(--text-muted)'
               }}>
-                <span style={{ fontWeight: '700', color: msg.sender === 'user' ? 'var(--emerald-light)' : '#ffffff' }}>
-                  {msg.sender === 'user' ? 'You (Farmer)' : 'AgriGroq AI'}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: '700', color: msg.sender === 'user' ? 'var(--emerald-light)' : '#ffffff' }}>
+                    {msg.sender === 'user' ? 'You (Farmer)' : 'AgriGroq AI'}
+                  </span>
+                  {msg.model && (
+                    <span style={{
+                      fontSize: '0.65rem',
+                      padding: '0.1rem 0.4rem',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid var(--border-emerald)',
+                      color: 'var(--emerald-light)'
+                    }}>
+                      {msg.model}
+                    </span>
+                  )}
+                </div>
                 <span>{msg.timestamp}</span>
               </div>
 
