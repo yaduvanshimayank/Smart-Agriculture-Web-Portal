@@ -9,7 +9,7 @@ import { soundEffects } from '../utils/audio.js';
 export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedCurrency, setSelectedCurrency] = useState('USD');
+  const [selectedCurrency, setSelectedCurrency] = useState('INR');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [alertActiveId, setAlertActiveId] = useState(null);
@@ -47,12 +47,12 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
 
   const handleConsultAIOnCommodity = (item) => {
     soundEffects.click(isMuted);
-    const prompt = `📊 Agricultural Commodity Economics: ${item.name} is trading at ${item.symbol}${item.price} per ${item.unit} (24h Trend: ${item.change24h > 0 ? '+' : ''}${item.change24h}%, Sentiment: ${item.sentiment}). Market advice indicates: "${item.advice}". As a precision farm economist, should I sell my surplus inventory now, store in grain silos, or hedge with futures contracts?`;
+    const prompt = `📊 APMC Mandi Commodity Economics: ${item.name} at ${item.mandi || 'APMC Mandi'} is trading at ${item.symbol}${item.price} per ${item.unit} (MSP Status: ${item.mspStatus || 'Market Spot'}, 24h Trend: ${item.change24h > 0 ? '+' : ''}${item.change24h}%, Sentiment: ${item.sentiment}). Advisory indicates: "${item.advice}". As a farm economist, should I sell immediately at the APMC mandi, store in accredited warehouses with electronic Negotiable Warehouse Receipts (e-NWR) for pledge finance, or await higher off-season prices?`;
     if (onConsultAI) onConsultAI(prompt);
   };
 
   const commodities = data?.commodities || [];
-  const categories = ['All', 'Grains', 'Oilseeds', 'Cash Crops'];
+  const categories = ['All', 'Grains', 'Pulses', 'Oilseeds', 'Cash Crops', 'Vegetables'];
 
   const filteredCommodities = commodities.filter(c => {
     const matchesCategory = selectedCategory === 'All' || c.category === selectedCategory;
@@ -75,14 +75,14 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
               Agricultural Commodity Market Intelligence
             </h1>
             <span className="badge badge-emerald">
               <Globe size={11} /> Global Grain Index
             </span>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '3px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginTop: '3px' }}>
             Real-time crop market prices, 7-day sparkline trends, and export recommendation advice
           </p>
         </div>
@@ -90,7 +90,7 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
         {/* Currency Switcher & Refresh */}
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Currency Switcher Buttons */}
-          <div style={{ display: 'flex', gap: '3px', background: 'rgba(3, 14, 9, 0.8)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-emerald)' }}>
+          <div style={{ display: 'flex', gap: '3px', background: 'var(--bg-subtle)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
             {['USD', 'EUR', 'INR', 'GBP', 'CAD'].map(curr => (
               <button
                 key={curr}
@@ -100,7 +100,7 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
                   borderRadius: '5px',
                   border: 'none',
                   backgroundColor: selectedCurrency === curr ? 'var(--emerald-main)' : 'transparent',
-                  color: selectedCurrency === curr ? '#021209' : 'var(--text-muted)',
+                  color: selectedCurrency === curr ? '#ffffff' : 'var(--text-muted)',
                   fontWeight: '700',
                   fontSize: '0.74rem',
                   cursor: 'pointer',
@@ -163,10 +163,10 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
             style={{
               padding: '0.45rem 0.8rem 0.45rem 2rem',
               fontSize: '0.78rem',
-              backgroundColor: 'rgba(3, 14, 9, 0.8)',
-              border: '1px solid var(--border-emerald)',
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: '8px',
-              color: '#fff',
+              color: 'var(--text-main)',
               outline: 'none',
               width: '180px'
             }}
@@ -174,7 +174,7 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
         </div>
       </div>
 
-      {/* Commodity Tickers Grid */}
+      {/* Commodity Tickers Grid (White Main Surface with Clean Subordinate Accents) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
@@ -205,24 +205,36 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
                 padding: '1.4rem',
                 display: 'flex',
                 flexDirection: 'column',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                borderTop: isUp ? '3px solid var(--emerald-main)' : '3px solid var(--rose-alert)'
               }}
             >
               <div>
                 {/* Header Row */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff' }}>{item.name}</h3>
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>
-                      Category: <strong style={{ color: 'var(--emerald-light)' }}>{item.category}</strong> • Per {item.unit}
+                    <h3 style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)' }}>{item.name}</h3>
+                    {item.mandi && (
+                      <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', fontWeight: '600', marginTop: '1px' }}>
+                        📍 {item.mandi}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <span>{item.category} • {item.unit}</span>
+                      {item.mspStatus && (
+                        <span className="badge badge-amber" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>
+                          {item.mspStatus}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   <div style={{
                     padding: '0.25rem 0.55rem',
                     borderRadius: '8px',
-                    backgroundColor: isUp ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
-                    color: isUp ? 'var(--emerald-light)' : 'var(--rose-alert)',
+                    backgroundColor: isUp ? 'var(--emerald-bg)' : 'var(--rose-bg)',
+                    color: isUp ? 'var(--emerald-main)' : 'var(--rose-alert)',
+                    border: `1px solid ${isUp ? 'var(--emerald-border)' : 'var(--rose-border)'}`,
                     fontWeight: '700',
                     fontSize: '0.78rem',
                     display: 'flex',
@@ -236,7 +248,7 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
 
                 {/* Price Display & 7-Day Sparkline */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                  <div style={{ fontSize: '1.9rem', fontWeight: '800', fontFamily: 'var(--font-mono)', color: '#ffffff', letterSpacing: '-0.02em' }}>
+                  <div style={{ fontSize: '1.9rem', fontWeight: '800', fontFamily: 'monospace', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
                     {item.symbol}{item.price.toFixed(2)}
                   </div>
 
@@ -245,12 +257,12 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
                     <svg width={sparkWidth} height={sparkHeight} style={{ overflow: 'visible' }}>
                       <polyline
                         fill="none"
-                        stroke={isUp ? '#10b981' : '#f43f5e'}
+                        stroke={isUp ? '#059669' : '#e11d48'}
                         strokeWidth="2.2"
                         points={sparkPoints}
                       />
                     </svg>
-                    <div style={{ fontSize: '0.64rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: '2px' }}>
+                    <div style={{ fontSize: '0.64rem', color: 'var(--text-dim)', textAlign: 'right', marginTop: '2px', fontWeight: '500' }}>
                       7-day trajectory
                     </div>
                   </div>
@@ -259,15 +271,15 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
                 {/* Market Sentiment & Advice */}
                 <div style={{
                   fontSize: '0.8rem',
-                  color: 'var(--text-muted)',
-                  backgroundColor: 'rgba(3, 14, 9, 0.75)',
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'var(--bg-subtle)',
                   padding: '0.8rem 0.9rem',
                   borderRadius: '10px',
-                  border: '1px solid var(--border-emerald)',
+                  border: '1px solid var(--border-subtle)',
                   marginBottom: '1rem'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                    <strong style={{ color: 'var(--emerald-light)', fontSize: '0.78rem' }}>
+                    <strong style={{ color: 'var(--emerald-main)', fontSize: '0.78rem' }}>
                       Market Advisory:
                     </strong>
                     <span className={`badge ${item.sentiment === 'Bullish' || item.sentiment === 'Strong Buy' ? 'badge-emerald' : 'badge-warning'}`} style={{ fontSize: '0.62rem' }}>
@@ -281,13 +293,13 @@ export default function MarketPrices({ onConsultAI, onShowToast, isMuted }) {
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '8px', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ display: 'flex', gap: '8px', paddingTop: '0.75rem', borderTop: '1px solid var(--border-subtle)' }}>
                 <button
                   className="btn-outline"
                   style={{ flex: 1, fontSize: '0.76rem', padding: '0.45rem' }}
                   onClick={() => handleSetAlert(item)}
                 >
-                  {alertActiveId === item.id ? <Check size={12} style={{ color: 'var(--emerald-light)' }} /> : <Bell size={12} />}
+                  {alertActiveId === item.id ? <Check size={12} style={{ color: 'var(--emerald-main)' }} /> : <Bell size={12} />}
                   <span>{alertActiveId === item.id ? 'Alert Set' : 'Price Alert'}</span>
                 </button>
 

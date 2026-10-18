@@ -170,14 +170,14 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
               Precision Agriculture IoT Mesh
             </h1>
             <span className="badge badge-emerald">
               <span className="status-dot"></span> 48 Nodes Live
             </span>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '3px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginTop: '3px' }}>
             Real-time soil microclimate, NPK chemistry analytics, evapotranspiration rates & automated irrigation
           </p>
         </div>
@@ -208,65 +208,101 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         </div>
       </div>
 
-      {/* 4 Summary Stats Cards Grid */}
+      {/* Indian Agro-Climatic & Seasonal Banner */}
+      <div style={{
+        backgroundColor: 'var(--bg-surface)',
+        border: '1px solid var(--emerald-border)',
+        borderRadius: '12px',
+        padding: '0.85rem 1.1rem',
+        marginBottom: '1.4rem',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '0.8rem',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '1.3rem' }}>🇮🇳</span>
+          <div>
+            <div style={{ fontSize: '0.86rem', fontWeight: '700', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Indian Crop Calendar: Active Rabi Season (रबी सीज़न)
+              <span className="badge badge-emerald" style={{ fontSize: '0.65rem' }}>PAU / ICAR Monitored</span>
+            </div>
+            <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Sharbati Wheat, Yellow Mustard & Desi Chana in vegetative tiller stage • Western Disturbance Moisture: Favorable
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <span className="badge badge-sky" style={{ fontSize: '0.7rem' }}>
+            PMKSY Micro-Drip Active
+          </span>
+          <span className="badge badge-amber" style={{ fontSize: '0.7rem' }}>
+            Soil NPK Target 4:2:1
+          </span>
+        </div>
+      </div>
+
+      {/* 4 Summary Stats Cards Grid with White Main Surfaces & Subordinate Accents */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
         gap: '1rem',
         marginBottom: '1.6rem'
       }}>
-        {/* Card 1: Farm Health */}
-        <div className="glass-panel" style={{ padding: '1.3rem' }}>
+        {/* Card 1: Farm Health (Emerald Subordinate) */}
+        <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--emerald-main)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
             <span style={{ fontWeight: '600' }}>Farm Health Index</span>
             <Activity size={17} style={{ color: 'var(--emerald-main)' }} />
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--emerald-light)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--emerald-main)', letterSpacing: '-0.02em' }}>
             {telemetry?.overallHealthIndex || 94.8}%
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', marginTop: '4px', fontWeight: '500' }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', marginTop: '4px', fontWeight: '600' }}>
             +2.4% vs last week (Optimal Soil Conditions)
           </div>
         </div>
 
-        {/* Card 2: Water Conservation */}
-        <div className="glass-panel" style={{ padding: '1.3rem' }}>
+        {/* Card 2: Water Conservation (Sky Blue Subordinate) */}
+        <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--blue-main)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
             <span style={{ fontWeight: '600' }}>Water Conserved</span>
-            <Droplets size={17} style={{ color: '#38bdf8' }} />
+            <Droplets size={17} style={{ color: 'var(--blue-main)' }} />
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: '800', color: '#38bdf8', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--blue-main)', letterSpacing: '-0.02em' }}>
             18,400 L
           </div>
-          <div style={{ fontSize: '0.74rem', color: '#38bdf8', marginTop: '4px', fontWeight: '500' }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--blue-main)', marginTop: '4px', fontWeight: '600' }}>
             ⚡ 28% water saved via precision drip cycles
           </div>
         </div>
 
-        {/* Card 3: Yield Projection */}
-        <div className="glass-panel" style={{ padding: '1.3rem' }}>
+        {/* Card 3: Yield Projection (Harvest Amber Subordinate) */}
+        <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--amber-warning)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
             <span style={{ fontWeight: '600' }}>Harvest Yield Projection</span>
-            <TrendingUp size={17} style={{ color: '#fbbf24' }} />
+            <TrendingUp size={17} style={{ color: 'var(--amber-warning)' }} />
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: '800', color: '#fbbf24', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--amber-warning)', letterSpacing: '-0.02em' }}>
             42.5 Tons
           </div>
-          <div style={{ fontSize: '0.74rem', color: '#fbbf24', marginTop: '4px', fontWeight: '500' }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--amber-warning)', marginTop: '4px', fontWeight: '600' }}>
             +14% projected yield gain vs baseline
           </div>
         </div>
 
-        {/* Card 4: Active Alerts */}
-        <div className="glass-panel" style={{ padding: '1.3rem', borderColor: 'rgba(245, 158, 11, 0.35)' }}>
+        {/* Card 4: Active Alerts (Rose Alert Subordinate) */}
+        <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--rose-alert)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
             <span style={{ fontWeight: '600' }}>Active Field Alerts</span>
-            <AlertTriangle size={17} style={{ color: 'var(--amber-warning)' }} />
+            <AlertTriangle size={17} style={{ color: 'var(--rose-alert)' }} />
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--amber-warning)', letterSpacing: '-0.02em' }}>
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--rose-alert)', letterSpacing: '-0.02em' }}>
             1 Attention
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--amber-warning)', marginTop: '4px', fontWeight: '500' }}>
+          <div style={{ fontSize: '0.74rem', color: 'var(--rose-alert)', marginTop: '4px', fontWeight: '600' }}>
             Zone 3 (Orchard): Moisture at 27% (Below 30%)
           </div>
         </div>
@@ -283,7 +319,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         <div className="glass-panel" style={{ padding: '1.4rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
                 <Activity size={17} style={{ color: 'var(--emerald-main)' }} /> Soil Microclimate Telemetry Trends
               </h3>
               <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
@@ -292,7 +328,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
             </div>
 
             {/* Time Range Selector */}
-            <div style={{ display: 'flex', gap: '4px', background: 'rgba(3, 14, 9, 0.8)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-emerald)' }}>
+            <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-subtle)', padding: '3px', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
               {['24h', '7d', '30d'].map(range => (
                 <button
                   key={range}
@@ -307,7 +343,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                     border: 'none',
                     borderRadius: '5px',
                     backgroundColor: timeRange === range ? 'var(--emerald-main)' : 'transparent',
-                    color: timeRange === range ? '#021209' : 'var(--text-muted)',
+                    color: timeRange === range ? '#ffffff' : 'var(--text-muted)',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease'
                   }}
@@ -334,11 +370,11 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                   top: `${hoverPoint.y}px` 
                 }}
               >
-                <div style={{ fontWeight: '700', color: 'var(--emerald-light)', marginBottom: '2px' }}>
+                <div style={{ fontWeight: '700', color: 'var(--emerald-main)', marginBottom: '2px' }}>
                   🕒 {hoverPoint.data.time}
                 </div>
-                <div style={{ color: '#38bdf8' }}>💧 Soil Moisture: <strong>{hoverPoint.data.moisture}%</strong></div>
-                <div style={{ color: 'var(--emerald-light)' }}>🌡️ Soil Temp: <strong>{hoverPoint.data.temp}°C</strong></div>
+                <div style={{ color: 'var(--blue-main)', fontWeight: '600' }}>💧 Soil Moisture: <strong>{hoverPoint.data.moisture}%</strong></div>
+                <div style={{ color: 'var(--emerald-main)', fontWeight: '600' }}>🌡️ Soil Temp: <strong>{hoverPoint.data.temp}°C</strong></div>
                 <div style={{ color: 'var(--text-muted)' }}>💨 Air Humidity: <strong>{hoverPoint.data.humidity}%</strong></div>
               </div>
             )}
@@ -346,8 +382,8 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
             <svg viewBox={`0 0 ${chartWidth} ${chartHeight}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
               <defs>
                 <linearGradient id="moistureGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0ea5e9" stopOpacity="0.45" />
-                  <stop offset="100%" stopColor="#0ea5e9" stopOpacity="0.0" />
+                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#0284c7" stopOpacity="0.0" />
                 </linearGradient>
               </defs>
 
@@ -361,7 +397,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                   <line 
                     x1={padLeft} y1={grid.y} 
                     x2={chartWidth - padRight} y2={grid.y} 
-                    stroke="rgba(255,255,255,0.06)" 
+                    stroke="var(--border-subtle)" 
                     strokeDasharray="4 4" 
                   />
                   <text 
@@ -369,7 +405,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                     fill="var(--text-dim)" 
                     fontSize="9" 
                     textAnchor="end"
-                    fontFamily="var(--font-mono)"
+                    fontFamily="monospace"
                   >
                     {grid.val}
                   </text>
@@ -380,10 +416,10 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               <path d={moistureAreaPath} fill="url(#moistureGrad)" />
 
               {/* Moisture Line */}
-              <path d={moisturePath} fill="none" stroke="#38bdf8" strokeWidth="2.5" />
+              <path d={moisturePath} fill="none" stroke="#0284c7" strokeWidth="2.5" />
 
               {/* Temperature Line */}
-              <path d={tempPath} fill="none" stroke="#10b981" strokeWidth="2" strokeDasharray="3 3" />
+              <path d={tempPath} fill="none" stroke="#059669" strokeWidth="2" strokeDasharray="3 3" />
 
               {/* Points & Hover Hit Areas */}
               {historyData.map((pt, i) => {
@@ -423,7 +459,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                       cx={cx}
                       cy={getYTemp(pt.temp)}
                       r={isHovered ? 5 : 3}
-                      fill="#10b981"
+                      fill="#059669"
                       stroke="#ffffff"
                       strokeWidth="1"
                       style={{ pointerEvents: 'none', transition: 'r 0.15s ease' }}
@@ -436,7 +472,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                       fill="var(--text-muted)"
                       fontSize="9.5"
                       textAnchor="middle"
-                      fontFamily="var(--font-mono)"
+                      fontFamily="monospace"
                     >
                       {pt.time}
                     </text>
@@ -449,11 +485,11 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
           {/* Chart Legend */}
           <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '0.6rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '3px', backgroundColor: '#38bdf8', borderRadius: '2px' }}></span>
+              <span style={{ width: '12px', height: '3px', backgroundColor: '#0284c7', borderRadius: '2px' }}></span>
               <span>Soil Moisture (%)</span>
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '3px', backgroundColor: '#10b981', borderRadius: '2px', borderStyle: 'dashed' }}></span>
+              <span style={{ width: '12px', height: '3px', backgroundColor: '#059669', borderRadius: '2px', borderStyle: 'dashed' }}></span>
               <span>Soil Temp (°C)</span>
             </span>
           </div>
@@ -463,8 +499,8 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         <div className="glass-panel" style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.7rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
-                <Sun size={17} style={{ color: '#fbbf24' }} /> Weather & Evapotranspiration ($ET_0$)
+              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+                <Sun size={17} style={{ color: 'var(--amber-warning)' }} /> Weather & Evapotranspiration ($ET_0$)
               </h3>
               <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
                 Automated Advisory
@@ -473,8 +509,8 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
 
             {/* Smart Rain Advisory Banner */}
             <div style={{
-              backgroundColor: 'rgba(14, 165, 233, 0.12)',
-              border: '1px solid rgba(14, 165, 233, 0.35)',
+              backgroundColor: 'var(--blue-bg)',
+              border: '1px solid var(--blue-border)',
               borderRadius: '10px',
               padding: '0.75rem 0.9rem',
               marginBottom: '0.9rem',
@@ -482,9 +518,9 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               alignItems: 'center',
               gap: '10px'
             }}>
-              <CloudRain size={22} style={{ color: '#38bdf8', flexShrink: 0 }} />
+              <CloudRain size={22} style={{ color: 'var(--blue-main)', flexShrink: 0 }} />
               <div style={{ fontSize: '0.78rem' }}>
-                <strong style={{ color: '#7dd3fc', display: 'block' }}>Rain Expected Tomorrow (85% Probability)</strong>
+                <strong style={{ color: 'var(--blue-dark)', display: 'block' }}>Rain Expected Tomorrow (85% Probability)</strong>
                 <span style={{ color: 'var(--text-muted)' }}>
                   Smart drip irrigation automatically queued for 24h delay to conserve ~1,400 Liters.
                 </span>
@@ -498,18 +534,18 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 return (
                   <div key={idx} className="weather-card">
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>{w.day}</span>
-                    <IconComponent size={18} style={{ color: w.rainProb !== '0%' ? '#38bdf8' : '#fbbf24', margin: '4px auto' }} />
-                    <span style={{ fontSize: '0.72rem', fontWeight: '700', display: 'block', color: '#fff' }}>{w.temp.split('/')[0]}</span>
-                    <span style={{ fontSize: '0.65rem', color: '#38bdf8', display: 'block' }}>☔ {w.rainProb}</span>
+                    <IconComponent size={18} style={{ color: w.rainProb !== '0%' ? 'var(--blue-main)' : 'var(--amber-warning)', margin: '4px auto' }} />
+                    <span style={{ fontSize: '0.74rem', fontWeight: '700', display: 'block', color: 'var(--text-main)' }}>{w.temp.split('/')[0]}</span>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--blue-main)', display: 'block', fontWeight: '600' }}>☔ {w.rainProb}</span>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.9rem', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.6rem' }}>
-            <span>Average Evapotranspiration: <strong style={{ color: 'var(--emerald-light)' }}>3.8 mm/day</strong></span>
-            <span>Solar Radiation Index: <strong style={{ color: '#fbbf24' }}>High (UV 7.2)</strong></span>
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.9rem', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.6rem' }}>
+            <span>Average Evapotranspiration: <strong style={{ color: 'var(--emerald-main)' }}>3.8 mm/day</strong></span>
+            <span>Solar Radiation Index: <strong style={{ color: 'var(--amber-warning)' }}>High (UV 7.2)</strong></span>
           </div>
         </div>
       </div>
@@ -524,7 +560,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         gap: '0.8rem'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
             <Sprout style={{ color: 'var(--emerald-main)' }} size={20} /> Field Zones & Root-Zone Soil Chemistry
           </h2>
           <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
@@ -545,10 +581,10 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               style={{
                 padding: '0.45rem 0.8rem 0.45rem 2rem',
                 fontSize: '0.78rem',
-                backgroundColor: 'rgba(3, 14, 9, 0.8)',
-                border: '1px solid var(--border-emerald)',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
                 borderRadius: '8px',
-                color: '#fff',
+                color: 'var(--text-main)',
                 outline: 'none',
                 width: '160px'
               }}
@@ -582,7 +618,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         </div>
       </div>
 
-      {/* Field Zones Cards Grid */}
+      {/* Field Zones Cards Grid (White Main Surface with Subordinate Accent Highlights) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
@@ -598,7 +634,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               className="glass-panel" 
               style={{ 
                 padding: '1.4rem',
-                borderColor: isWarning ? 'rgba(245, 158, 11, 0.45)' : 'var(--border-emerald)',
+                borderLeft: isWarning ? '4px solid var(--amber-warning)' : '4px solid var(--emerald-main)',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between'
@@ -608,9 +644,14 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 {/* Zone Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.9rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff' }}>{zone.name}</h3>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Crop: <strong style={{ color: 'var(--emerald-light)' }}>{zone.crop}</strong> • {zone.area}
+                    <h3 style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)' }}>{zone.name}</h3>
+                    {zone.soilType && (
+                      <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', fontWeight: '600', marginTop: '2px' }}>
+                        🌾 {zone.soilType}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                      Crop: <strong style={{ color: 'var(--text-main)' }}>{zone.crop}</strong> • {zone.area}
                     </div>
                   </div>
                   <span className={`badge ${isWarning ? 'badge-warning' : 'badge-emerald'}`}>
@@ -623,50 +664,50 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 <div style={{ marginBottom: '1.1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem' }}>
                     <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Droplets size={13} style={{ color: '#38bdf8' }} /> Soil Moisture Content
+                      <Droplets size={13} style={{ color: 'var(--blue-main)' }} /> Soil Moisture Content
                     </span>
-                    <span style={{ fontWeight: '700', color: zone.soilMoisture < 30 ? 'var(--amber-warning)' : 'var(--emerald-light)' }}>
+                    <span style={{ fontWeight: '700', color: zone.soilMoisture < 30 ? 'var(--amber-warning)' : 'var(--blue-main)' }}>
                       {zone.soilMoisture}%
                     </span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
                     <div style={{
                       width: `${Math.min(100, zone.soilMoisture)}%`,
                       height: '100%',
                       background: zone.soilMoisture < 30 
-                        ? 'linear-gradient(90deg, #f59e0b, #ef4444)'
-                        : 'linear-gradient(90deg, #38bdf8, #10b981)',
+                        ? 'linear-gradient(90deg, var(--amber-light), var(--rose-light))'
+                        : 'linear-gradient(90deg, var(--blue-main), var(--emerald-main))',
                       borderRadius: '4px',
                       transition: 'width 0.5s ease'
                     }}></div>
                   </div>
                 </div>
 
-                {/* Key Metrics Grid */}
+                {/* Key Metrics Grid (Crisp Sub-surface) */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '0.7rem',
-                  backgroundColor: 'rgba(4, 16, 11, 0.65)',
+                  backgroundColor: 'var(--bg-subtle)',
                   padding: '0.9rem',
                   borderRadius: '10px',
                   marginBottom: '1rem',
-                  border: '1px solid rgba(255,255,255,0.04)'
+                  border: '1px solid var(--border-subtle)'
                 }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Thermometer size={11} /> Soil Temp
+                      <Thermometer size={11} style={{ color: 'var(--rose-alert)' }} /> Soil Temp
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
                       {zone.soilTemp} °C
                     </div>
                   </div>
 
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Wind size={11} /> Air Humidity
+                      <Wind size={11} style={{ color: 'var(--blue-main)' }} /> Air Humidity
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
                       {zone.airHumidity} %
                     </div>
                   </div>
@@ -675,16 +716,16 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                       Soil pH Level
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--emerald-light)', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--emerald-main)', marginTop: '2px' }}>
                       {zone.ph} pH
                     </div>
                   </div>
 
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Sun size={11} /> Sunlight Lux
+                      <Sun size={11} style={{ color: 'var(--amber-warning)' }} /> Sunlight Lux
                     </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: '#fff', marginTop: '2px' }}>
+                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
                       {(zone.sunlightLux / 1000).toFixed(1)} kLx
                     </div>
                   </div>
@@ -692,36 +733,36 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
 
                 {/* Visual NPK Target Chemistry Bars */}
                 <div style={{ fontSize: '0.78rem', marginBottom: '1.1rem' }}>
-                  <span style={{ color: 'var(--text-muted)', display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
+                  <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
                     NPK Nutrient Ratios vs Crop Target (mg/kg)
                   </span>
 
                   <div className="npk-bar-container">
-                    {/* Nitrogen */}
+                    {/* Nitrogen (Emerald) */}
                     <div className="npk-bar-item">
                       <span className="npk-label">Nitrogen (N)</span>
                       <div className="npk-track">
-                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.n / 180) * 100)}%`, backgroundColor: '#10b981' }}></div>
+                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.n / 180) * 100)}%`, backgroundColor: 'var(--emerald-main)' }}></div>
                       </div>
-                      <span className="npk-value" style={{ color: '#34d399' }}>{zone.npk.n}</span>
+                      <span className="npk-value" style={{ color: 'var(--emerald-main)' }}>{zone.npk.n}</span>
                     </div>
 
-                    {/* Phosphorus */}
+                    {/* Phosphorus (Blue) */}
                     <div className="npk-bar-item">
                       <span className="npk-label">Phosphorus (P)</span>
                       <div className="npk-track">
-                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.p / 90) * 100)}%`, backgroundColor: '#0ea5e9' }}></div>
+                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.p / 90) * 100)}%`, backgroundColor: 'var(--blue-main)' }}></div>
                       </div>
-                      <span className="npk-value" style={{ color: '#38bdf8' }}>{zone.npk.p}</span>
+                      <span className="npk-value" style={{ color: 'var(--blue-main)' }}>{zone.npk.p}</span>
                     </div>
 
-                    {/* Potassium */}
+                    {/* Potassium (Amber) */}
                     <div className="npk-bar-item">
                       <span className="npk-label">Potassium (K)</span>
                       <div className="npk-track">
-                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.k / 220) * 100)}%`, backgroundColor: '#f59e0b' }}></div>
+                        <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.k / 220) * 100)}%`, backgroundColor: 'var(--amber-warning)' }}></div>
                       </div>
-                      <span className="npk-value" style={{ color: '#fbbf24' }}>{zone.npk.k}</span>
+                      <span className="npk-value" style={{ color: 'var(--amber-warning)' }}>{zone.npk.k}</span>
                     </div>
                   </div>
                 </div>
@@ -730,7 +771,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               {/* Action Footer */}
               <div style={{
                 paddingTop: '0.85rem',
-                borderTop: '1px solid rgba(255,255,255,0.06)',
+                borderTop: '1px solid var(--border-subtle)',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '8px'
@@ -743,7 +784,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                     onClick={() => handleIrrigateZone(zone)}
                     disabled={isIrrigating}
                   >
-                    <Droplets size={13} style={{ color: '#38bdf8' }} />
+                    <Droplets size={13} style={{ color: 'var(--blue-main)' }} />
                     <span>{isIrrigating ? 'Pulsing...' : 'Quick Irrigate'}</span>
                   </button>
 
@@ -772,7 +813,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 }}>
                   <span>Irrigated: {zone.lastIrrigated}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <BatteryCharging size={11} style={{ color: 'var(--emerald-light)' }} /> {zone.battery}% Power
+                    <BatteryCharging size={11} style={{ color: 'var(--emerald-main)' }} /> {zone.battery}% Power
                   </span>
                 </div>
               </div>

@@ -17,7 +17,7 @@ export default function AgriGroqChat({ initialPrompt, onClearInitialPrompt, onSh
       {
         id: 'msg-welcome',
         sender: 'bot',
-        text: `👋 Hello! I am **AgriSmart AI**, your precision agricultural science & agronomy assistant.
+        text: `👋 Hello! I am **AgriSmart AI**, powered by Groq's high-speed agronomic inference engine.
 
 I am strictly constrained to answer **farming, agronomy, crop pathology, and smart IoT agriculture questions only** (e.g. crop cultivation, soil health, pest control, NPK fertilization, irrigation scheduling, greenhouse climate, and agricultural commodity markets).
 
@@ -48,7 +48,7 @@ How can I assist your farm today?`,
       if (onShowToast) onShowToast('Groq API Key securely stored for this session', 'success');
     } else {
       localStorage.removeItem('groq_api_key');
-      if (onShowToast) onShowToast('Using built-in Smart Agronomy Engine', 'info');
+      if (onShowToast) onShowToast('Using system default Groq & Agronomy Engine', 'info');
     }
   };
 
@@ -56,18 +56,18 @@ How can I assist your farm today?`,
     if (initialPrompt) {
       setInput(initialPrompt);
       if (onClearInitialPrompt) onClearInitialPrompt();
-      // Auto-focus input
       const inputEl = document.getElementById('agri-chat-input');
       inputEl?.focus();
     }
   }, [initialPrompt]);
 
   const suggestedPrompts = [
-    { label: "🌾 Wheat NPK Ratio", query: "How to optimize NPK fertilizer ratio for winter wheat?" },
-    { label: "🍅 Tomato Blight", query: "Best organic treatments for tomato early blight (Alternaria solani)?" },
-    { label: "💧 Drip Irrigation", query: "What is the ideal drip irrigation schedule for sandy loam soil?" },
-    { label: "🌽 Maize Armyworm", query: "How to prevent and control armyworm infestation in maize crops?" },
-    { label: "🚜 IoT Soil Probes", query: "What smart sensors are best for monitoring soil moisture and NPK in real time?" }
+    { label: "🌾 Wheat NPK & Zinc", query: "How to optimize 4:2:1 NPK fertilizer and Zinc Sulfate for Sharbati Wheat?" },
+    { label: "🐛 Cotton Pink Bollworm", query: "What is the ICAR-recommended integrated pest management for Pink Bollworm in BT Cotton?" },
+    { label: "🌱 Jeevamrut & Neem Astra", query: "How to formulate indigenous Jeevamrut and Neem Astra for natural organic farming?" },
+    { label: "🌾 Basmati Blast Control", query: "Best biological and chemical schedule to prevent Blast disease in Basmati 1121 paddy?" },
+    { label: "💧 PMKSY Drip Schedule", query: "How to configure pulse drip irrigation for Sandy Loam and Black Cotton soil under PMKSY?" },
+    { label: "🚜 Indian Soil Mesh", query: "What are optimal smart sensors and LoRaWAN frequency (865-867 MHz) for Indian farm soil?" }
   ];
 
   const testGuardrailPrompts = [
@@ -99,14 +99,8 @@ How can I assist your farm today?`,
         if (onShowToast) onShowToast(`Voice captured: "${transcript}"`, 'info');
       };
 
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
       recognitionRef.current = recognition;
     }
   }, []);
@@ -200,7 +194,6 @@ How can I assist your farm today?`,
       });
 
       const data = await res.json();
-
       soundEffects.scan(isMuted);
 
       const botReply = {
@@ -247,7 +240,6 @@ How can I assist your farm today?`,
         return <h4 key={idx}>{line.replace('#### ', '')}</h4>;
       }
 
-      // Bold formatter
       const boldParts = line.split(/\*\*(.*?)\*\*/g);
       const renderedParts = boldParts.map((part, i) => 
         i % 2 === 1 ? <strong key={i}>{part}</strong> : part
@@ -292,22 +284,22 @@ How can I assist your farm today?`,
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{
             width: '42px', height: '42px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.4))',
-            border: '1px solid var(--border-emerald-glow)',
+            background: 'linear-gradient(135deg, var(--emerald-main) 0%, var(--emerald-light) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--emerald-light)', flexShrink: 0
+            color: '#ffffff', flexShrink: 0,
+            boxShadow: '0 3px 10px rgba(5, 150, 105, 0.25)'
           }}>
             <Bot size={24} />
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff' }}>AgriSmart AI Advisor</h2>
+              <h2 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)' }}>AgriSmart AI Advisor</h2>
               <span className="badge badge-emerald">
-                <ShieldCheck size={12} /> Domain Guardrail Active
+                <ShieldCheck size={12} /> Guardrail Active
               </span>
             </div>
             <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-              Precision Agronomy Intelligence Engine • Llama-3.3 70B & Built-in Agricultural Knowledge Base
+              Precision Agronomy Intelligence Engine • Live Groq High-Speed LLM Inference
             </p>
           </div>
         </div>
@@ -345,7 +337,7 @@ How can I assist your farm today?`,
             style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem' }}
           >
             <Key size={14} />
-            <span>{userApiKey ? 'Groq Active' : 'Configure Key'}</span>
+            <span>Configure Key</span>
           </button>
         </div>
       </div>
@@ -379,10 +371,10 @@ How can I assist your farm today?`,
             {msg.sender === 'bot' && (
               <div style={{
                 width: '34px', height: '34px', borderRadius: '50%',
-                backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid var(--border-emerald)',
+                backgroundColor: 'var(--emerald-bg)',
+                border: '1px solid var(--emerald-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--emerald-light)', flexShrink: 0, marginTop: '4px'
+                color: 'var(--emerald-main)', flexShrink: 0, marginTop: '4px'
               }}>
                 <Bot size={18} />
               </div>
@@ -393,12 +385,12 @@ How can I assist your farm today?`,
               padding: '0.95rem 1.3rem',
               borderRadius: msg.sender === 'user' ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
               backgroundColor: msg.sender === 'user' 
-                ? 'rgba(16, 185, 129, 0.22)' 
-                : msg.isError ? 'rgba(244, 63, 94, 0.12)' : 'rgba(5, 20, 14, 0.88)',
+                ? 'var(--blue-bg)' 
+                : msg.isError ? 'var(--rose-bg)' : 'var(--bg-surface)',
               border: msg.sender === 'user' 
-                ? '1px solid var(--border-emerald-glow)' 
-                : msg.isError ? '1px solid rgba(244, 63, 94, 0.3)' : '1px solid var(--border-emerald)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+                ? '1px solid var(--blue-border)' 
+                : msg.isError ? '1px solid var(--rose-border)' : '1px solid var(--border-subtle)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
               position: 'relative'
             }}>
               <div style={{
@@ -406,24 +398,17 @@ How can I assist your farm today?`,
                 marginBottom: '0.4rem', fontSize: '0.74rem', color: 'var(--text-muted)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontWeight: '700', color: msg.sender === 'user' ? 'var(--emerald-light)' : '#ffffff' }}>
+                  <span style={{ fontWeight: '700', color: msg.sender === 'user' ? 'var(--blue-main)' : 'var(--text-main)' }}>
                     {msg.sender === 'user' ? 'Farmer (Operator)' : 'AgriGroq AI'}
                   </span>
                   {msg.model && (
-                    <span style={{
-                      fontSize: '0.65rem',
-                      padding: '0.1rem 0.4rem',
-                      borderRadius: '4px',
-                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                      border: '1px solid var(--border-emerald)',
-                      color: 'var(--emerald-light)'
-                    }}>
-                      {msg.model}
+                    <span className="badge badge-emerald" style={{ fontSize: '0.62rem', padding: '0.1rem 0.4rem' }}>
+                      ⚡ {msg.model}
                     </span>
                   )}
                   {msg.isGuardrail && (
                     <span className="badge badge-warning" style={{ fontSize: '0.62rem', padding: '0.1rem 0.35rem' }}>
-                      Guardrail Active
+                      Domain Guardrail
                     </span>
                   )}
                 </div>
@@ -437,7 +422,7 @@ How can I assist your farm today?`,
                       style={{
                         background: 'none',
                         border: 'none',
-                        color: copiedId === msg.id ? 'var(--emerald-light)' : 'var(--text-muted)',
+                        color: copiedId === msg.id ? 'var(--emerald-main)' : 'var(--text-muted)',
                         cursor: 'pointer',
                         padding: '2px',
                         display: 'flex',
@@ -458,10 +443,10 @@ How can I assist your farm today?`,
             {msg.sender === 'user' && (
               <div style={{
                 width: '34px', height: '34px', borderRadius: '50%',
-                backgroundColor: 'rgba(14, 165, 233, 0.15)',
-                border: '1px solid rgba(14, 165, 233, 0.3)',
+                backgroundColor: 'var(--blue-bg)',
+                border: '1px solid var(--blue-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#38bdf8', flexShrink: 0, marginTop: '4px'
+                color: 'var(--blue-main)', flexShrink: 0, marginTop: '4px'
               }}>
                 <User size={18} />
               </div>
@@ -470,9 +455,9 @@ How can I assist your farm today?`,
         ))}
 
         {loading && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--emerald-light)', fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--emerald-main)', fontSize: '0.85rem', padding: '0.5rem 1rem' }}>
             <RefreshCw size={16} className="spin" style={{ animation: 'spin 1s linear infinite' }} />
-            <span>AgriGroq AI is synthesizing agronomic recommendations & telemetry data...</span>
+            <span style={{ fontWeight: '600' }}>AgriGroq AI is streaming agronomic recommendations via high-speed Groq engine...</span>
           </div>
         )}
 
@@ -481,7 +466,7 @@ How can I assist your farm today?`,
 
       {/* Suggested Quick Prompts & Guardrail Verification Chips */}
       <div style={{ marginBottom: '0.7rem' }}>
-        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600' }}>
           <Sparkles size={13} style={{ color: 'var(--emerald-main)' }} /> Quick Agricultural Prompts & Domain Tests:
         </div>
         
@@ -494,15 +479,22 @@ How can I assist your farm today?`,
                 whiteSpace: 'nowrap',
                 padding: '0.35rem 0.75rem',
                 borderRadius: '8px',
-                backgroundColor: 'rgba(16, 185, 129, 0.08)',
-                border: '1px solid var(--border-emerald)',
-                color: 'var(--text-main)',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
                 fontSize: '0.78rem',
                 cursor: 'pointer',
-                transition: 'all 0.15s ease'
+                transition: 'all 0.15s ease',
+                fontWeight: '500'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--emerald-main)'}
-              onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-emerald)'}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'var(--emerald-main)';
+                e.currentTarget.style.color = 'var(--emerald-main)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                e.currentTarget.style.color = 'var(--text-secondary)';
+              }}
             >
               {p.label}
             </button>
@@ -516,9 +508,9 @@ How can I assist your farm today?`,
                 whiteSpace: 'nowrap',
                 padding: '0.35rem 0.75rem',
                 borderRadius: '8px',
-                backgroundColor: idx === 1 ? 'rgba(244, 63, 94, 0.12)' : 'rgba(16, 185, 129, 0.15)',
-                border: idx === 1 ? '1px solid rgba(244, 63, 94, 0.4)' : '1px solid var(--border-emerald-glow)',
-                color: idx === 1 ? 'var(--rose-alert)' : 'var(--emerald-light)',
+                backgroundColor: idx === 1 ? 'var(--rose-bg)' : 'var(--emerald-bg)',
+                border: idx === 1 ? '1px solid var(--rose-border)' : '1px solid var(--emerald-border)',
+                color: idx === 1 ? 'var(--rose-alert)' : 'var(--emerald-main)',
                 fontSize: '0.78rem',
                 fontWeight: '700',
                 cursor: 'pointer'
@@ -542,18 +534,18 @@ How can I assist your farm today?`,
           disabled={loading}
           style={{
             flex: 1,
-            padding: '0.85rem 3rem 0.85rem 1.1rem',
-            backgroundColor: 'rgba(4, 16, 11, 0.95)',
-            border: '1px solid var(--border-emerald)',
+            padding: '0.85rem 3.2rem 0.85rem 1.1rem',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
             borderRadius: '12px',
             color: 'var(--text-main)',
             fontSize: '0.92rem',
             outline: 'none',
-            boxShadow: '0 4px 18px rgba(0,0,0,0.4)'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
           }}
         />
 
-        {/* Speech-to-Text Microphone Button inside input right edge */}
+        {/* Speech-to-Text Microphone Button */}
         <button
           type="button"
           onClick={toggleVoiceInput}
@@ -563,9 +555,9 @@ How can I assist your farm today?`,
             right: '125px',
             top: '50%',
             transform: 'translateY(-50%)',
-            background: isListening ? 'var(--rose-alert)' : 'rgba(16, 185, 129, 0.15)',
-            border: isListening ? 'none' : '1px solid var(--border-emerald)',
-            color: isListening ? '#fff' : 'var(--emerald-light)',
+            background: isListening ? 'var(--rose-alert)' : 'var(--bg-subtle)',
+            border: isListening ? 'none' : '1px solid var(--border-subtle)',
+            color: isListening ? '#fff' : 'var(--emerald-main)',
             borderRadius: '8px',
             padding: '6px 8px',
             cursor: 'pointer',

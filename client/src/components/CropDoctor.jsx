@@ -17,10 +17,12 @@ export default function CropDoctor({ onConsultAI, onShowToast, isMuted }) {
   const fileInputRef = useRef(null);
 
   const sampleDiseases = [
-    { label: 'Tomato Early Blight (Target Rings)', crop: 'Tomatoes', symptom: 'Blight' },
-    { label: 'Wheat Yellow Stripe Rust (Puccinia)', crop: 'Wheat', symptom: 'Rust' },
-    { label: 'Corn Pale Yellow Leaf (Chlorosis)', crop: 'Corn', symptom: 'Nitrogen' },
-    { label: 'Cucumber Powdery Mildew (Erysiphe)', crop: 'Cucumbers', symptom: 'Powdery' }
+    { label: 'Rice Blast (झुलसा रोग) - Basmati Paddy', crop: 'Basmati Rice', symptom: 'blast' },
+    { label: 'Cotton Pink Bollworm (गुलाबी सुंडी) - BT Cotton', crop: 'BT Cotton', symptom: 'bollworm' },
+    { label: 'Wheat Stripe Rust (पीला रतुआ) - Sharbati Wheat', crop: 'Sharbati Wheat', symptom: 'rust' },
+    { label: 'Tomato & Chilli Leaf Curl (पत्ती मरोड़)', crop: 'Tomatoes', symptom: 'leaf curl' },
+    { label: 'Sugarcane Red Rot (लाल सड़न)', crop: 'Sugarcane', symptom: 'red rot' },
+    { label: 'Nitrogen & Zinc Chlorosis (Khaira Disease)', crop: 'Paddy / Wheat', symptom: 'deficiency' }
   ];
 
   // File Upload Handler (with instant image preview)
@@ -35,7 +37,6 @@ export default function CropDoctor({ onConsultAI, onShowToast, isMuted }) {
     reader.onload = () => {
       setImagePreview(reader.result);
       if (onShowToast) onShowToast(`Photo "${file.name}" loaded for AI pathology scan`, 'info');
-      // Trigger scan automatically
       triggerAnalysis(file.name, symptomInput);
     };
     reader.readAsDataURL(file);
@@ -46,7 +47,6 @@ export default function CropDoctor({ onConsultAI, onShowToast, isMuted }) {
     setDiagnosis(null);
     soundEffects.scan(isMuted);
 
-    // Multi-step animated progress simulation
     setScanStep('Inspecting foliar cellular structure...');
     await new Promise(r => setTimeout(r, 600));
     setScanStep('Cross-referencing fungal & bacterial pathogen database...');
@@ -112,14 +112,14 @@ Can you formulate a customized 14-day field intervention schedule combining both
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
               AI Crop Pathology Doctor & Diagnostic Lab
             </h1>
             <span className="badge badge-emerald">
               <Sparkles size={11} /> Neural Vision Diagnostic
             </span>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '3px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginTop: '3px' }}>
             Scan crop foliage symptoms to get instant AI diagnostic reports, organic treatments, and preventive agronomy plans
           </p>
         </div>
@@ -135,7 +135,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '1.5rem' }}>
         {/* Left Column: Foliage Scanner & Upload */}
         <div className="glass-panel" style={{ padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
             <UploadCloud style={{ color: 'var(--emerald-main)' }} size={20} /> Foliage Image Scanner
           </h2>
 
@@ -158,7 +158,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
               borderRadius: '14px',
               padding: imagePreview ? '0' : '2.2rem 1.2rem',
               textAlign: 'center',
-              backgroundColor: 'rgba(3, 14, 9, 0.7)',
+              backgroundColor: 'var(--bg-subtle)',
               cursor: imagePreview ? 'default' : 'pointer',
               marginBottom: '1.2rem',
               position: 'relative',
@@ -168,11 +168,11 @@ Can you formulate a customized 14-day field intervention schedule combining both
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              transition: 'border-color 0.2s ease'
+              transition: 'all 0.2s ease'
             }}
           >
             {imagePreview ? (
-              <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: '#000' }}>
+              <div style={{ position: 'relative', width: '100%', height: '220px', backgroundColor: '#0f172a' }}>
                 <img 
                   src={imagePreview} 
                   alt="Crop Foliage Preview" 
@@ -202,8 +202,8 @@ Can you formulate a customized 14-day field intervention schedule combining both
                     position: 'absolute',
                     top: '10px',
                     right: '10px',
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    border: '1px solid var(--border-emerald)',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    border: '1px solid #ffffff',
                     borderRadius: '50%',
                     width: '30px',
                     height: '30px',
@@ -222,12 +222,13 @@ Can you formulate a customized 14-day field intervention schedule combining both
                   position: 'absolute',
                   bottom: '10px',
                   left: '10px',
-                  backgroundColor: 'rgba(3, 14, 9, 0.85)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.92)',
                   padding: '4px 10px',
                   borderRadius: '6px',
-                  fontSize: '0.72rem',
-                  color: 'var(--emerald-light)',
-                  border: '1px solid var(--border-emerald)'
+                  fontSize: '0.74rem',
+                  fontWeight: '600',
+                  color: 'var(--text-main)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                 }}>
                   📸 {imageFileName || 'Uploaded Leaf Specimen'}
                 </div>
@@ -236,17 +237,17 @@ Can you formulate a customized 14-day field intervention schedule combining both
               <>
                 <div style={{
                   width: '50px', height: '50px', borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  color: 'var(--emerald-light)',
+                  backgroundColor: 'var(--emerald-bg)',
+                  color: 'var(--emerald-main)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   marginBottom: '0.8rem'
                 }}>
                   <Camera size={26} />
                 </div>
-                <h3 style={{ fontSize: '0.98rem', fontWeight: '700', marginBottom: '0.3rem', color: '#fff' }}>
+                <h3 style={{ fontSize: '0.98rem', fontWeight: '700', marginBottom: '0.3rem', color: 'var(--text-main)' }}>
                   Upload Crop Leaf Photo or Tap Camera
                 </h3>
-                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                   Supports JPG, PNG, WEBP (Instant AI Neural Analysis)
                 </p>
                 <div style={{ marginTop: '0.8rem' }}>
@@ -277,8 +278,8 @@ Can you formulate a customized 14-day field intervention schedule combining both
                   style={{
                     padding: '0.65rem 0.9rem',
                     borderRadius: '8px',
-                    border: '1px solid var(--border-emerald)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.04)',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-surface)',
                     color: 'var(--text-main)',
                     fontSize: '0.82rem',
                     textAlign: 'left',
@@ -287,7 +288,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
                     alignItems: 'center'
                   }}
                 >
-                  <span style={{ fontWeight: '500' }}>{sd.label}</span>
+                  <span style={{ fontWeight: '600' }}>{sd.label}</span>
                   <Bug size={15} style={{ color: 'var(--emerald-main)' }} />
                 </button>
               ))}
@@ -318,7 +319,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
         {/* Right Column: AI Diagnostic Report */}
         <div className="glass-panel" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
-            <h2 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: '#fff' }}>
+            <h2 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
               <FileText style={{ color: 'var(--emerald-main)' }} size={20} /> Pathology Diagnostic Report
             </h2>
 
@@ -327,8 +328,8 @@ Can you formulate a customized 14-day field intervention schedule combining both
                 {/* Disease Title Banner */}
                 <div style={{
                   padding: '1.1rem',
-                  backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid var(--border-emerald-glow)',
+                  backgroundColor: 'var(--emerald-bg)',
+                  border: '1px solid var(--emerald-border)',
                   borderRadius: '12px',
                   marginBottom: '1.2rem'
                 }}>
@@ -340,12 +341,17 @@ Can you formulate a customized 14-day field intervention schedule combining both
                       <AlertTriangle size={12} /> Severity: {diagnosis.severity}
                     </span>
                   </div>
-                  <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: '#ffffff', letterSpacing: '-0.01em' }}>
+                  <h3 style={{ fontSize: '1.18rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
                     {diagnosis.name}
                   </h3>
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', gap: '12px' }}>
-                    <span>Type: <strong style={{ color: 'var(--emerald-light)' }}>{diagnosis.pathogenType || 'Pathogen'}</strong></span>
-                    <span>Incubation: <strong style={{ color: '#fff' }}>{diagnosis.incubationPeriod || '3-7 Days'}</strong></span>
+                  {diagnosis.region && (
+                    <div style={{ fontSize: '0.74rem', color: 'var(--blue-main)', fontWeight: '600', marginTop: '3px' }}>
+                      📍 Regional Belt: {diagnosis.region}
+                    </div>
+                  )}
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <span>Type: <strong style={{ color: 'var(--emerald-main)' }}>{diagnosis.pathogenType || 'Pathogen'}</strong></span>
+                    <span>Incubation: <strong style={{ color: 'var(--text-main)' }}>{diagnosis.incubationPeriod || '3-7 Days'}</strong></span>
                   </div>
                 </div>
 
@@ -364,12 +370,12 @@ Can you formulate a customized 14-day field intervention schedule combining both
                 {/* Organic Treatment */}
                 <div style={{
                   padding: '0.9rem',
-                  backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                  backgroundColor: 'var(--emerald-bg)',
                   borderRadius: '10px',
                   borderLeft: '4px solid var(--emerald-main)',
                   marginBottom: '0.85rem'
                 }}>
-                  <h4 style={{ fontSize: '0.88rem', color: 'var(--emerald-light)', fontWeight: '700', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <h4 style={{ fontSize: '0.88rem', color: 'var(--emerald-main)', fontWeight: '700', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <Leaf size={15} /> Eco-Friendly Organic Treatment Plan
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
@@ -380,12 +386,12 @@ Can you formulate a customized 14-day field intervention schedule combining both
                 {/* Chemical Treatment */}
                 <div style={{
                   padding: '0.9rem',
-                  backgroundColor: 'rgba(14, 165, 233, 0.08)',
+                  backgroundColor: 'var(--blue-bg)',
                   borderRadius: '10px',
-                  borderLeft: '4px solid #0ea5e9',
+                  borderLeft: '4px solid var(--blue-main)',
                   marginBottom: '0.85rem'
                 }}>
-                  <h4 style={{ fontSize: '0.88rem', color: '#38bdf8', fontWeight: '700', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <h4 style={{ fontSize: '0.88rem', color: 'var(--blue-main)', fontWeight: '700', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <HeartPulse size={15} /> Commercial Chemical Remedy
                   </h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
@@ -394,7 +400,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
                 </div>
 
                 {/* Prevention */}
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', backgroundColor: 'rgba(3, 14, 9, 0.7)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', backgroundColor: 'var(--bg-subtle)', padding: '0.75rem 0.9rem', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
                   <strong style={{ color: 'var(--text-main)' }}>Agronomic Prevention:</strong> {diagnosis.prevention}
                 </div>
               </div>
@@ -403,11 +409,11 @@ Can you formulate a customized 14-day field intervention schedule combining both
                 textAlign: 'center',
                 padding: '4rem 1.5rem',
                 color: 'var(--text-muted)',
-                border: '1px dashed rgba(255,255,255,0.1)',
+                border: '1px dashed var(--border-subtle)',
                 borderRadius: '12px'
               }}>
                 <Stethoscope size={44} style={{ opacity: 0.35, marginBottom: '0.8rem', color: 'var(--emerald-main)' }} />
-                <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: '#fff', marginBottom: '0.4rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
                   No Pathology Scan Active
                 </h4>
                 <p style={{ fontSize: '0.82rem' }}>
@@ -419,7 +425,7 @@ Can you formulate a customized 14-day field intervention schedule combining both
 
           {/* Direct Consult AI Action */}
           {diagnosis && (
-            <div style={{ marginTop: '1.2rem', paddingTop: '0.85rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ marginTop: '1.2rem', paddingTop: '0.85rem', borderTop: '1px solid var(--border-subtle)' }}>
               <button 
                 className="btn-emerald" 
                 style={{ width: '100%', justifyContent: 'center', padding: '0.75rem' }}

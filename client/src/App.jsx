@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, Bot, Stethoscope, Sliders, TrendingUp, 
   Sprout, Activity, Zap, ShieldCheck, Volume2, VolumeX,
-  Clock, MapPin, CheckCircle2, AlertTriangle, Info, Bell
+  Clock, MapPin, CheckCircle2, AlertTriangle, Info, Bell,
+  Sun, Moon
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard.jsx';
@@ -15,10 +16,24 @@ import { soundEffects } from './utils/audio.js';
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initialPrompt, setInitialPrompt] = useState('');
+  const [theme, setTheme] = useState(() => localStorage.getItem('agri_theme') || 'light');
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-  const [selectedFarm, setSelectedFarm] = useState('Green Valley Farm — Sector Alpha');
+  const [selectedFarm, setSelectedFarm] = useState('Punjab Agro-Hub — Ludhiana (Alluvial Basin)');
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('agri_muted') === 'true');
   const [toasts, setToasts] = useState([]);
+
+  // Apply theme to document root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('agri_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    soundEffects.click(isMuted);
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(nextTheme);
+    showToast(nextTheme === 'light' ? '☀️ Clean White theme active' : '🌙 Deep Emerald theme active', 'info');
+  };
 
   // Toast notification dispatcher
   const showToast = (message, type = 'success') => {
@@ -40,7 +55,6 @@ export default function App() {
   // Keyboard shortcut listener (1-5 to switch tabs)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Don't trigger if user is typing inside an input or textarea
       if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
       if (e.key === '1') switchTab('dashboard');
       if (e.key === '2') switchTab('chat');
@@ -74,23 +88,23 @@ export default function App() {
 
   const navItems = [
     { id: 'dashboard', label: 'IoT Telemetry Mesh', icon: LayoutDashboard, shortcut: '1' },
-    { id: 'chat', label: 'AI Farm Advisor', icon: Bot, badge: 'Guardrail', shortcut: '2' },
+    { id: 'chat', label: 'AI Farm Advisor', icon: Bot, badge: 'Groq Live', shortcut: '2' },
     { id: 'crop-doctor', label: 'AI Crop Pathology', icon: Stethoscope, shortcut: '3' },
     { id: 'controls', label: 'Farm Controls & Valves', icon: Sliders, shortcut: '4' },
     { id: 'market', label: 'Commodity Prices', icon: TrendingUp, shortcut: '5' }
   ];
 
   return (
-    <div className="app-container">
+    <div className="app-container" data-theme={theme}>
       {/* Toast Notification Container */}
       <div className="toast-container">
         {toasts.map(t => (
           <div key={t.id} className={`toast ${t.type === 'warning' ? 'toast-warning' : t.type === 'error' ? 'toast-error' : ''}`}>
             {t.type === 'warning' && <AlertTriangle size={18} style={{ color: 'var(--amber-warning)', flexShrink: 0 }} />}
             {t.type === 'error' && <AlertTriangle size={18} style={{ color: 'var(--rose-alert)', flexShrink: 0 }} />}
-            {t.type === 'info' && <Info size={18} style={{ color: '#38bdf8', flexShrink: 0 }} />}
-            {t.type === 'success' && <CheckCircle2 size={18} style={{ color: 'var(--emerald-light)', flexShrink: 0 }} />}
-            <span>{t.message}</span>
+            {t.type === 'info' && <Info size={18} style={{ color: 'var(--blue-main)', flexShrink: 0 }} />}
+            {t.type === 'success' && <CheckCircle2 size={18} style={{ color: 'var(--emerald-main)', flexShrink: 0 }} />}
+            <span style={{ fontWeight: '500' }}>{t.message}</span>
           </div>
         ))}
       </div>
@@ -105,7 +119,7 @@ export default function App() {
             gap: '12px',
             paddingBottom: '1.2rem',
             marginBottom: '1.2rem',
-            borderBottom: '1px solid var(--border-emerald)'
+            borderBottom: '1px solid var(--border-subtle)'
           }}>
             <div style={{
               width: '42px',
@@ -115,19 +129,19 @@ export default function App() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#021209',
-              boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
+              color: '#ffffff',
+              boxShadow: '0 4px 14px rgba(16, 185, 129, 0.35)',
               flexShrink: 0
             }}>
-              <Sprout size={26} />
+              <Sprout size={24} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
-                  AgriSmart <span style={{ color: 'var(--emerald-light)' }}>AI</span>
+                <h2 style={{ fontSize: '1.22rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
+                  AgriSmart <span style={{ color: 'var(--emerald-main)' }}>AI</span>
                 </h2>
               </div>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block' }}>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '500' }}>
                 Precision Agriculture Portal
               </span>
             </div>
@@ -135,7 +149,7 @@ export default function App() {
 
           {/* Farm Sector Selector */}
           <div style={{ marginBottom: '1.2rem' }}>
-            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem' }}>
+            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.35rem', fontWeight: '600' }}>
               <MapPin size={11} style={{ color: 'var(--emerald-main)' }} /> Active Operation
             </label>
             <select
@@ -147,8 +161,8 @@ export default function App() {
               style={{
                 width: '100%',
                 padding: '0.5rem 0.7rem',
-                backgroundColor: 'rgba(5, 20, 14, 0.9)',
-                border: '1px solid var(--border-emerald)',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
                 borderRadius: '8px',
                 color: 'var(--text-main)',
                 fontSize: '0.78rem',
@@ -157,9 +171,11 @@ export default function App() {
                 cursor: 'pointer'
               }}
             >
-              <option value="Green Valley Farm — Sector Alpha">Green Valley Farm — Sector Alpha</option>
-              <option value="Highland AgroTech — East Plots">Highland AgroTech — East Plots</option>
-              <option value="SunRidge Hydroponic Hub">SunRidge Hydroponic Hub</option>
+              <option value="Punjab Agro-Hub — Ludhiana (Alluvial Basin)">Punjab Agro-Hub — Ludhiana (Alluvial Basin)</option>
+              <option value="Maharashtra Deccan Agri-Zone — Vidarbha (Black Cotton Soil)">Maharashtra Deccan Agri-Zone — Vidarbha (Black Cotton Soil)</option>
+              <option value="Gujarat Saurashtra Organic Block — Rajkot (Semi-Arid Drip)">Gujarat Saurashtra Organic Block — Rajkot (Semi-Arid Drip)</option>
+              <option value="Uttar Pradesh Gangetic Farm — Varanasi (Sugarcane & Rice)">Uttar Pradesh Gangetic Farm — Varanasi (Sugarcane & Rice)</option>
+              <option value="Karnataka Precision Polyhouse — Bengaluru Rural (Red Laterite Soil)">Karnataka Precision Polyhouse — Bengaluru Rural (Red Laterite Soil)</option>
             </select>
           </div>
 
@@ -176,11 +192,11 @@ export default function App() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0.75rem 0.95rem',
+                    padding: '0.72rem 0.95rem',
                     borderRadius: '10px',
                     border: isActive ? '1px solid var(--emerald-main)' : '1px solid transparent',
-                    backgroundColor: isActive ? 'rgba(16, 185, 129, 0.16)' : 'transparent',
-                    color: isActive ? '#ffffff' : 'var(--text-muted)',
+                    backgroundColor: isActive ? 'var(--emerald-bg)' : 'transparent',
+                    color: isActive ? 'var(--emerald-main)' : 'var(--text-secondary)',
                     fontWeight: isActive ? '700' : '500',
                     fontSize: '0.88rem',
                     cursor: 'pointer',
@@ -188,14 +204,14 @@ export default function App() {
                     textAlign: 'left'
                   }}
                   onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = 'rgba(16, 185, 129, 0.06)';
+                    if (!isActive) e.currentTarget.style.backgroundColor = 'var(--bg-subtle)';
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                    <Icon size={18} style={{ color: isActive ? 'var(--emerald-light)' : 'var(--text-muted)', flexShrink: 0 }} />
+                    <Icon size={18} style={{ color: isActive ? 'var(--emerald-main)' : 'var(--text-muted)', flexShrink: 0 }} />
                     <span>{item.label}</span>
                   </div>
 
@@ -205,7 +221,7 @@ export default function App() {
                         {item.badge}
                       </span>
                     )}
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '4px', padding: '0.1rem 0.3rem', fontFamily: 'var(--font-mono)' }}>
+                    <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', border: '1px solid var(--border-subtle)', borderRadius: '4px', padding: '0.1rem 0.3rem', fontFamily: 'monospace' }}>
                       {item.shortcut}
                     </span>
                   </div>
@@ -218,37 +234,56 @@ export default function App() {
         {/* Sidebar Footer Info */}
         <div style={{
           paddingTop: '1rem',
-          borderTop: '1px solid var(--border-emerald)',
+          borderTop: '1px solid var(--border-subtle)',
           fontSize: '0.76rem',
           color: 'var(--text-muted)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="status-dot"></span>
-              <span>IoT Mesh: <strong>48 Nodes</strong></span>
+              <span>Mesh: <strong style={{ color: 'var(--text-main)' }}>48 Live</strong></span>
             </div>
             
-            {/* Audio Feedback Toggle */}
-            <button
-              onClick={toggleSound}
-              title={isMuted ? 'Unmute Audio UI Feedback' : 'Mute Audio UI Feedback'}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: isMuted ? 'var(--text-dim)' : 'var(--emerald-light)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                padding: '4px',
-                borderRadius: '6px'
-              }}
-            >
-              {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-            </button>
+            {/* Controls: Theme & Audio */}
+            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+              <button
+                onClick={toggleTheme}
+                title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to White Main Mode'}
+                style={{
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
+              </button>
+
+              <button
+                onClick={toggleSound}
+                title={isMuted ? 'Unmute Audio UI Feedback' : 'Mute Audio UI Feedback'}
+                style={{
+                  background: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-subtle)',
+                  color: isMuted ? 'var(--text-dim)' : 'var(--emerald-main)',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                  borderRadius: '6px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
+            </div>
           </div>
 
-          <div style={{ color: 'var(--emerald-light)', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <ShieldCheck size={12} /> Agronomy Safety Guardrail Active
+          <div style={{ color: 'var(--emerald-main)', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '600' }}>
+            <ShieldCheck size={13} /> Agronomy Guardrail & Groq Online
           </div>
         </div>
       </aside>
@@ -261,28 +296,41 @@ export default function App() {
               width: '32px', height: '32px', borderRadius: '8px',
               background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#021209'
+              color: '#fff'
             }}>
               <Sprout size={18} />
             </div>
-            <span style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff' }}>
-              AgriSmart <span style={{ color: 'var(--emerald-light)' }}>AI</span>
+            <span style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--text-main)' }}>
+              AgriSmart <span style={{ color: 'var(--emerald-main)' }}>AI</span>
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <button
-              onClick={toggleSound}
+              onClick={toggleTheme}
               style={{
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid var(--border-emerald)',
-                color: isMuted ? 'var(--text-dim)' : 'var(--emerald-light)',
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 padding: '5px 8px',
                 borderRadius: '8px'
               }}
             >
-              {isMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              {theme === 'light' ? <Moon size={13} /> : <Sun size={13} />}
+            </button>
+            <button
+              onClick={toggleSound}
+              style={{
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-subtle)',
+                color: isMuted ? 'var(--text-dim)' : 'var(--emerald-main)',
+                cursor: 'pointer',
+                padding: '5px 8px',
+                borderRadius: '8px'
+              }}
+            >
+              {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
             <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
               <span className="status-dot"></span> Live
@@ -306,9 +354,9 @@ export default function App() {
                   whiteSpace: 'nowrap',
                   padding: '0.45rem 0.8rem',
                   borderRadius: '20px',
-                  border: isActive ? '1px solid var(--emerald-main)' : '1px solid rgba(255,255,255,0.1)',
-                  backgroundColor: isActive ? 'rgba(16, 185, 129, 0.25)' : 'rgba(5, 20, 14, 0.8)',
-                  color: isActive ? 'var(--emerald-light)' : 'var(--text-muted)',
+                  border: isActive ? '1px solid var(--emerald-main)' : '1px solid var(--border-subtle)',
+                  backgroundColor: isActive ? 'var(--emerald-bg)' : 'var(--bg-surface)',
+                  color: isActive ? 'var(--emerald-main)' : 'var(--text-secondary)',
                   fontSize: '0.78rem',
                   fontWeight: isActive ? '700' : '500',
                   cursor: 'pointer'
@@ -331,26 +379,29 @@ export default function App() {
           alignItems: 'center',
           marginBottom: '1.5rem',
           paddingBottom: '0.85rem',
-          borderBottom: '1px solid rgba(16, 185, 129, 0.14)',
+          borderBottom: '1px solid var(--border-subtle)',
           flexWrap: 'wrap',
           gap: '0.8rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <span className="badge badge-emerald">
-              <Zap size={11} /> Smart Autonomous Portal
+            <span className="badge badge-indigo">
+              <Zap size={11} /> Autonomous Precision Portal
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <Clock size={13} style={{ color: 'var(--emerald-light)' }} />
-              <strong style={{ color: 'var(--text-main)', fontFamily: 'var(--font-mono)' }}>{currentTime}</strong>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Clock size={13} style={{ color: 'var(--emerald-main)' }} />
+              <strong style={{ color: 'var(--text-main)', fontFamily: 'monospace' }}>{currentTime}</strong>
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              Telemetry Mesh: <strong style={{ color: 'var(--emerald-light)' }}>48/48 Verified</strong>
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span className="badge badge-emerald" style={{ fontSize: '0.72rem' }}>
-              <ShieldCheck size={12} /> Enterprise Ready
+              🇮🇳 Bharat Agri-Network / APMC Connected
+            </span>
+            <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+              Telemetry Mesh: <strong style={{ color: 'var(--emerald-main)' }}>48/48 Nodes</strong>
+            </span>
+            <span className="badge badge-indigo" style={{ fontSize: '0.72rem' }}>
+              <ShieldCheck size={12} /> Groq LLM Connected
             </span>
           </div>
         </header>

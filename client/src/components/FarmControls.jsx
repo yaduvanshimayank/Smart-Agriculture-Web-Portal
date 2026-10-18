@@ -102,10 +102,11 @@ export default function FarmControls({ onShowToast, isMuted }) {
   const vent = controls?.greenhouseVentilation || {};
 
   const payloadOptions = [
-    'Neem Organic Solution 85%',
+    'IFFCO Nano Urea (4% N foliar spray)',
+    'Indigenous Neem Astra 10% (Bio-Pesticide)',
+    'Jeevamrut Microbial Foliar Extract',
     'Copper Hydroxide 40% (Bio-Fungicide)',
-    'Liquid Organic Bio-Fertilizer (Seaweed)',
-    'Bacillus thuringiensis (Bt Biopesticide)'
+    'Bacillus thuringiensis (Bt var. kurstaki)'
   ];
 
   return (
@@ -121,14 +122,14 @@ export default function FarmControls({ onShowToast, isMuted }) {
       }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: '#fff' }}>
+            <h1 style={{ fontSize: '1.65rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-main)' }}>
               SCADA Actuators & Automation Controls
             </h1>
             <span className="badge badge-emerald">
-              <Cpu size={11} /> SCADA Control Mesh Active
+              <Cpu size={11} /> SCADA Mesh Active
             </span>
           </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '3px' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginTop: '3px' }}>
             Remote solenoid valve arrays, autonomous UAV aerial sprayers, and climate environmental actuators
           </p>
         </div>
@@ -158,13 +159,13 @@ export default function FarmControls({ onShowToast, isMuted }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
                   width: '40px', height: '40px', borderRadius: '10px',
-                  backgroundColor: 'rgba(14, 165, 233, 0.15)',
-                  color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  backgroundColor: 'var(--blue-bg)',
+                  color: 'var(--blue-main)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   <Droplets size={22} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: '#fff' }}>Smart Drip Irrigation</h3>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: 'var(--text-main)' }}>Smart Drip Irrigation</h3>
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Solenoid Valve Array • 2.8 Bar</span>
                 </div>
               </div>
@@ -185,7 +186,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
                 style={{ flex: 1, fontSize: '0.78rem', padding: '0.45rem' }}
                 onClick={() => handleMasterValves(true)}
               >
-                <Power size={13} style={{ color: 'var(--emerald-light)' }} /> Open All Valves
+                <Power size={13} style={{ color: 'var(--emerald-main)' }} /> Open All Valves
               </button>
               <button
                 className="btn-danger"
@@ -211,13 +212,13 @@ export default function FarmControls({ onShowToast, isMuted }) {
                     style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       padding: '0.65rem 0.9rem',
-                      backgroundColor: 'rgba(3, 14, 9, 0.7)',
+                      backgroundColor: 'var(--bg-subtle)',
                       borderRadius: '10px',
-                      border: '1px solid var(--border-emerald)'
+                      border: '1px solid var(--border-subtle)'
                     }}
                   >
                     <div>
-                      <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', display: 'block' }}>{z.name}</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-main)', display: 'block' }}>{z.name}</span>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Flow: {isActive ? '1.8 L/min (Nominal)' : '0.0 L/min (Closed)'}</span>
                     </div>
 
@@ -227,8 +228,9 @@ export default function FarmControls({ onShowToast, isMuted }) {
                         padding: '0.35rem 0.85rem',
                         borderRadius: '20px',
                         border: 'none',
-                        backgroundColor: isActive ? 'var(--emerald-main)' : 'rgba(255,255,255,0.08)',
-                        color: isActive ? '#021209' : 'var(--text-muted)',
+                        backgroundColor: isActive ? 'var(--emerald-main)' : 'var(--bg-surface)',
+                        color: isActive ? '#ffffff' : 'var(--text-muted)',
+                        boxShadow: isActive ? '0 2px 8px rgba(5, 150, 105, 0.3)' : 'none',
                         fontWeight: '700',
                         fontSize: '0.74rem',
                         cursor: 'pointer',
@@ -248,7 +250,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
           <div style={{
             marginTop: '1.2rem',
             paddingTop: '0.8rem',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--border-subtle)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center'
@@ -266,9 +268,9 @@ export default function FarmControls({ onShowToast, isMuted }) {
                     borderRadius: '6px',
                     fontSize: '0.72rem',
                     fontWeight: '700',
-                    border: drip.scheduledDurationMin === mins ? '1px solid var(--emerald-main)' : '1px solid rgba(255,255,255,0.1)',
-                    backgroundColor: drip.scheduledDurationMin === mins ? 'rgba(16, 185, 129, 0.25)' : 'transparent',
-                    color: drip.scheduledDurationMin === mins ? 'var(--emerald-light)' : 'var(--text-muted)',
+                    border: drip.scheduledDurationMin === mins ? '1px solid var(--emerald-main)' : '1px solid var(--border-subtle)',
+                    backgroundColor: drip.scheduledDurationMin === mins ? 'var(--emerald-bg)' : 'transparent',
+                    color: drip.scheduledDurationMin === mins ? 'var(--emerald-main)' : 'var(--text-muted)',
                     cursor: 'pointer'
                   }}
                 >
@@ -286,13 +288,13 @@ export default function FarmControls({ onShowToast, isMuted }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
                   width: '40px', height: '40px', borderRadius: '10px',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  color: 'var(--emerald-light)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  backgroundColor: 'var(--emerald-bg)',
+                  color: 'var(--emerald-main)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   <Plane size={22} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: '#fff' }}>AgriFly Drone Sprayer</h3>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: 'var(--text-main)' }}>AgriFly Drone Sprayer</h3>
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>GPS Precision Hexacopter UAV</span>
                 </div>
               </div>
@@ -303,8 +305,8 @@ export default function FarmControls({ onShowToast, isMuted }) {
 
             {/* Flight Mission HUD / Radar Simulation */}
             <div style={{
-              backgroundColor: 'rgba(3, 14, 9, 0.85)',
-              border: '1px solid var(--border-emerald)',
+              backgroundColor: 'var(--bg-subtle)',
+              border: '1px solid var(--border-subtle)',
               borderRadius: '12px',
               padding: '1.1rem',
               marginBottom: '1rem',
@@ -327,7 +329,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
                   <div style={{
                     width: '100%',
                     height: '2px',
-                    backgroundColor: 'var(--emerald-light)',
+                    backgroundColor: 'var(--emerald-main)',
                     animation: 'radarSweep 2s linear infinite',
                     transformOrigin: 'center'
                   }}></div>
@@ -337,25 +339,25 @@ export default function FarmControls({ onShowToast, isMuted }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.78rem', marginBottom: '0.8rem' }}>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Battery Status:</span>
-                  <div style={{ fontSize: '1.05rem', fontWeight: '800', color: 'var(--emerald-light)', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--emerald-main)', fontFamily: 'monospace' }}>
                     {drone.battery}%
                   </div>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Flight Altitude:</span>
-                  <div style={{ fontSize: '1.05rem', fontWeight: '800', color: '#fff', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-main)', fontFamily: 'monospace' }}>
                     {drone.flightAltitudeMeters || 3.5} m
                   </div>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Spray Coverage:</span>
-                  <div style={{ fontSize: '1.05rem', fontWeight: '800', color: '#38bdf8', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--blue-main)', fontFamily: 'monospace' }}>
                     {drone.sprayCoverageHa || 12.4} Ha
                   </div>
                 </div>
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>GPS Mesh RTK:</span>
-                  <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--emerald-light)' }}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: '700', color: 'var(--emerald-main)' }}>
                     ± 2 cm Lock
                   </div>
                 </div>
@@ -364,11 +366,11 @@ export default function FarmControls({ onShowToast, isMuted }) {
               {/* Progress Bar when in mission */}
               {droneFlying && (
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '0.3rem', color: 'var(--emerald-light)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.74rem', marginBottom: '0.3rem', color: 'var(--emerald-main)', fontWeight: '700' }}>
                     <span>Executing Swath Pattern...</span>
                     <span>{droneProgress}%</span>
                   </div>
-                  <div style={{ width: '100%', height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--border-subtle)', borderRadius: '3px', overflow: 'hidden' }}>
                     <div style={{ width: `${droneProgress}%`, height: '100%', backgroundColor: 'var(--emerald-main)', transition: 'width 0.8s ease' }}></div>
                   </div>
                 </div>
@@ -387,8 +389,8 @@ export default function FarmControls({ onShowToast, isMuted }) {
                 style={{
                   width: '100%',
                   padding: '0.55rem 0.8rem',
-                  backgroundColor: 'rgba(3, 14, 9, 0.9)',
-                  border: '1px solid var(--border-emerald)',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
                   borderRadius: '8px',
                   color: 'var(--text-main)',
                   fontSize: '0.82rem',
@@ -403,7 +405,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
             </div>
           </div>
 
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '0.9rem' }}>
+          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.9rem' }}>
             <button 
               className="btn-emerald" 
               style={{ width: '100%', justifyContent: 'center', padding: '0.8rem' }}
@@ -435,13 +437,13 @@ export default function FarmControls({ onShowToast, isMuted }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div style={{
                   width: '40px', height: '40px', borderRadius: '10px',
-                  backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                  color: '#f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                  backgroundColor: 'var(--amber-bg)',
+                  color: 'var(--amber-warning)', display: 'flex', alignItems: 'center', justifyContent: 'center'
                 }}>
                   <Fan size={22} className={vent.fanSpeed !== 'LOW' ? 'spin' : ''} style={{ animation: vent.fanSpeed !== 'LOW' ? 'spin 3s linear infinite' : 'none' }} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: '#fff' }}>Greenhouse Climate Actuators</h3>
+                  <h3 style={{ fontSize: '1.08rem', fontWeight: '700', color: 'var(--text-main)' }}>Greenhouse Climate Actuators</h3>
                   <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>HVAC, Foggers & Circulation</span>
                 </div>
               </div>
@@ -452,10 +454,10 @@ export default function FarmControls({ onShowToast, isMuted }) {
 
             {/* Target Temperature Setpoint */}
             <div style={{
-              backgroundColor: 'rgba(3, 14, 9, 0.7)',
+              backgroundColor: 'var(--bg-subtle)',
               padding: '0.85rem 1rem',
               borderRadius: '10px',
-              border: '1px solid var(--border-emerald)',
+              border: '1px solid var(--border-subtle)',
               marginBottom: '1rem',
               display: 'flex',
               justifyContent: 'space-between',
@@ -463,12 +465,12 @@ export default function FarmControls({ onShowToast, isMuted }) {
             }}>
               <div>
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Thermometer size={13} /> Target Canopy Temp
+                  <Thermometer size={13} style={{ color: 'var(--rose-alert)' }} /> Target Canopy Temp
                 </span>
-                <span style={{ fontSize: '1.2rem', fontWeight: '800', color: '#fff', fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-main)', fontFamily: 'monospace' }}>
                   {vent.targetTemp || 24} °C
                 </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--emerald-light)', display: 'block' }}>
+                <span style={{ fontSize: '0.72rem', color: 'var(--emerald-main)', display: 'block', fontWeight: '600' }}>
                   Current: {vent.currentTemp || 25.5} °C
                 </span>
               </div>
@@ -476,14 +478,14 @@ export default function FarmControls({ onShowToast, isMuted }) {
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button
                   className="btn-outline"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', fontWeight: '700' }}
                   onClick={() => toggleDevice('greenhouseVentilation', 'targetTemp', Math.max(16, (vent.targetTemp || 24) - 1))}
                 >
                   -
                 </button>
                 <button
                   className="btn-outline"
-                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }}
+                  style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem', fontWeight: '700' }}
                   onClick={() => toggleDevice('greenhouseVentilation', 'targetTemp', Math.min(32, (vent.targetTemp || 24) + 1))}
                 >
                   +
@@ -495,7 +497,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
             <div style={{ marginBottom: '1.1rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Target Relative Humidity Setpoint:</span>
-                <strong style={{ color: 'var(--emerald-light)' }}>{vent.targetHumidity}%</strong>
+                <strong style={{ color: 'var(--emerald-main)' }}>{vent.targetHumidity}%</strong>
               </div>
               <input 
                 type="range"
@@ -526,9 +528,9 @@ export default function FarmControls({ onShowToast, isMuted }) {
                       flex: 1,
                       padding: '0.5rem',
                       borderRadius: '8px',
-                      border: vent.fanSpeed === speed ? '1px solid var(--emerald-main)' : '1px solid var(--border-emerald)',
-                      backgroundColor: vent.fanSpeed === speed ? 'rgba(16,185,129,0.22)' : 'rgba(3, 14, 9, 0.6)',
-                      color: vent.fanSpeed === speed ? 'var(--emerald-light)' : 'var(--text-muted)',
+                      border: vent.fanSpeed === speed ? '1px solid var(--emerald-main)' : '1px solid var(--border-subtle)',
+                      backgroundColor: vent.fanSpeed === speed ? 'var(--emerald-bg)' : 'var(--bg-surface)',
+                      color: vent.fanSpeed === speed ? 'var(--emerald-main)' : 'var(--text-muted)',
                       fontWeight: '700',
                       fontSize: '0.75rem',
                       cursor: 'pointer'
@@ -546,7 +548,7 @@ export default function FarmControls({ onShowToast, isMuted }) {
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
             gap: '8px',
-            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderTop: '1px solid var(--border-subtle)',
             paddingTop: '0.9rem'
           }}>
             <button
@@ -554,9 +556,9 @@ export default function FarmControls({ onShowToast, isMuted }) {
               style={{
                 padding: '0.55rem',
                 borderRadius: '8px',
-                border: vent.mistFogger ? '1px solid #38bdf8' : '1px solid var(--border-emerald)',
-                backgroundColor: vent.mistFogger ? 'rgba(14, 165, 233, 0.2)' : 'rgba(3, 14, 9, 0.6)',
-                color: vent.mistFogger ? '#38bdf8' : 'var(--text-muted)',
+                border: vent.mistFogger ? '1px solid var(--blue-main)' : '1px solid var(--border-subtle)',
+                backgroundColor: vent.mistFogger ? 'var(--blue-bg)' : 'var(--bg-surface)',
+                color: vent.mistFogger ? 'var(--blue-main)' : 'var(--text-muted)',
                 fontSize: '0.78rem',
                 fontWeight: '700',
                 cursor: 'pointer',
@@ -574,9 +576,9 @@ export default function FarmControls({ onShowToast, isMuted }) {
               style={{
                 padding: '0.55rem',
                 borderRadius: '8px',
-                border: vent.exhaustFan ? '1px solid var(--emerald-main)' : '1px solid var(--border-emerald)',
-                backgroundColor: vent.exhaustFan ? 'rgba(16, 185, 129, 0.2)' : 'rgba(3, 14, 9, 0.6)',
-                color: vent.exhaustFan ? 'var(--emerald-light)' : 'var(--text-muted)',
+                border: vent.exhaustFan ? '1px solid var(--emerald-main)' : '1px solid var(--border-subtle)',
+                backgroundColor: vent.exhaustFan ? 'var(--emerald-bg)' : 'var(--bg-surface)',
+                color: vent.exhaustFan ? 'var(--emerald-main)' : 'var(--text-muted)',
                 fontSize: '0.78rem',
                 fontWeight: '700',
                 cursor: 'pointer',

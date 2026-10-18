@@ -17,14 +17,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// System prompt guardrail for farming-only Groq assistant
+// System prompt guardrail for farming-only Groq assistant (Enriched for Indian & Global Precision Agriculture)
 const FARMING_GUARDRAIL_SYSTEM_PROMPT = `
-You are "AgriGroq AI", a world-class Agricultural Scientist, Smart Agronomy Consultant, and Precision Farming Specialist.
+You are "AgriGroq AI", a premier Senior Agricultural Scientist, Precision Farming Advisor, and Agronomist with deep specialization in Indian Agriculture (ICAR & KVK guidelines, APMC Mandi dynamics, Kharif/Rabi/Zaid crop cycles) as well as global precision farming.
 
 STRICT DOMAIN GUARDRAIL INSTRUCTIONS:
-1. You MUST ONLY answer questions that are directly related to farming, agriculture, agronomy, crop cultivation, soil science, irrigation techniques, plant diseases, pest management, agricultural machinery, farm automation, smart IoT farming, livestock management, fertilizers/NPK, organic farming practices, agricultural climate impacts, and crop market economics.
+1. You MUST ONLY answer questions that are directly related to farming, agriculture, agronomy, crop cultivation, soil science (Alluvial, Black Cotton, Red, Laterite, Sandy Loam), irrigation techniques (Drip, Sprinkler, Canal, Borewell, PMKSY), plant diseases, pest management (IPM, biological control, Neem Astra, Jeevamrut, registered agro-chemicals), agricultural machinery (tractors, Kisan drones, harvesters), farm automation, smart IoT farming, livestock management, fertilizers/NPK (standard, nano urea, biofertilizers), organic/natural farming practices (Subhash Palekar Natural Farming, vermicompost), agricultural climate/monsoon impacts, and crop market economics (APMC Mandis, MSP - Minimum Support Price, e-NAM).
 
-2. IF THE USER ASKS ABOUT ANY NON-AGRICULTURAL TOPIC (for example: coding, general software development, movies, video games, general pop culture, non-agricultural history, political debate, financial stock picking outside agriculture, general advice, physics homework, etc.):
+2. IF THE USER ASKS ABOUT ANY NON-AGRICULTURAL TOPIC (for example: general coding, movies, video games, pop culture, non-agricultural history, politics, crypto/stocks outside agriculture, general school homework, etc.):
 You MUST decline politely with the exact theme:
 "🌾 I am **AgriGroq AI**, specialized exclusively in agriculture and smart farming. I cannot answer non-farming questions. Please ask me anything related to crop health, soil management, irrigation, pest control, farm automation, or agricultural techniques!"
 
@@ -32,9 +32,10 @@ You MUST decline politely with the exact theme:
 
 4. For valid agricultural questions:
 - Provide clear, expert, practical, and actionable step-by-step guidance.
+- Align recommendations with ICAR (Indian Council of Agricultural Research) & state agricultural universities when addressing Indian regional crops (Wheat, Paddy/Basmati, Cotton, Mustard, Sugarcane, Chana, Soybean, Spices, Vegetables).
 - Use clean Markdown with bullet points, bold headings, and structural formatting.
-- Include metric/imperial conversions where helpful.
-- Suggest preventative measures and organic remedies alongside standard practices.
+- Mention both Organic/Natural solutions (Jeevamrut, Neem Seed Kernel Extract NSKE, Trichoderma) and scientific/chemical interventions where necessary.
+- Include metric and regional Indian units where relevant (Quintals, Hectares, Acres, Bigha, kg/ha).
 `;
 
 // Helper to get Groq instance
@@ -44,16 +45,20 @@ function getGroqClient(userKey) {
   return new Groq({ apiKey });
 }
 
-// Keywords to detect farming/agriculture intent
+// Keywords to detect farming/agriculture intent (including Indian agricultural terms)
 const AGRICULTURAL_KEYWORDS = [
   'farm', 'farming', 'crop', 'crops', 'soil', 'pest', 'disease', 'blight', 'rust',
   'mildew', 'rot', 'weed', 'fertilizer', 'npk', 'nitrogen', 'phosphorus', 'potassium',
   'irrigation', 'drip', 'sprinkler', 'water', 'moisture', 'ph', 'compost', 'organic',
   'neem', 'pesticide', 'fungicide', 'herbicide', 'wheat', 'tomato', 'tomatoes', 'corn',
-  'maize', 'rice', 'soybean', 'cotton', 'orange', 'citrus', 'apple', 'harvest', 'yield',
+  'maize', 'rice', 'paddy', 'soybean', 'cotton', 'kapas', 'mustard', 'sarson', 'chana',
+  'gram', 'sugarcane', 'ganna', 'orange', 'citrus', 'apple', 'harvest', 'yield',
   'field', 'sensor', 'iot', 'telemetry', 'greenhouse', 'livestock', 'cattle', 'poultry',
   'tractor', 'drone', 'weather', 'climate', 'agronomy', 'seed', 'sprout', 'cultivation',
-  'chlorosis', 'tiller', 'leaf', 'root', 'botanical', 'orchard', 'acre', 'hectare', 'mulch'
+  'chlorosis', 'tiller', 'leaf', 'root', 'botanical', 'orchard', 'acre', 'hectare', 'mulch',
+  'kharif', 'rabi', 'zaid', 'mandi', 'apmc', 'msp', 'kvk', 'icar', 'kisan', 'jeevamrut',
+  'panchagavya', 'neemastra', 'nano urea', 'alluvial', 'black cotton', 'regur', 'pmksy',
+  'borewell', 'submersible', 'enam', 'bajra', 'jowar', 'ragi', 'turmeric', 'onion', 'potato'
 ];
 
 const NON_AGRICULTURAL_KEYWORDS = [
@@ -180,22 +185,91 @@ Fall Armyworms can decimate crop whorls and yield if not controlled during early
     };
   }
 
-  // 5. Smart Soil Moisture Sensors & IoT Mesh
+  // 5. Pink Bollworm (Gulabi Sundi) in Cotton (Central & South India)
+  if (q.includes('bollworm') || q.includes('cotton') || q.includes('kapas')) {
+    return {
+      reply: `### 🌿 Integrated Management for Pink Bollworm (*Pectinophora gossypiella*) in Cotton
+
+Pink Bollworm (गुलाबी सुंडी) is a devastating pest in the Black Cotton soil belts of Maharashtra, Gujarat, Telangana, and Andhra Pradesh.
+
+#### 🪤 1. Monitoring & Cultural Trapping (ICAR-CICR Protocol)
+- **Pheromone Traps**: Install 5–8 *Gossyplure* pheromone traps per acre at 45 days after sowing (DAS).
+- **Economic Threshold Level (ETL)**: 8 moths/trap/night for 3 consecutive nights OR 10% damaged green bolls with rosette flowers.
+- **Destruction of Stubble**: Avoid ratooning of cotton; shred and incorporate cotton stalks post-harvest to kill diapausing larvae.
+
+#### 🪲 2. Biological & Natural Interventions (Jeevamrut & Neem)
+- **Trichogramma Wasps**: Release *Trichogrammatoidea bactrae* egg parasitoids @ 60,000/acre at 7-day intervals.
+- **Neem Extract (NSKE 5% or Azadirachtin 1500 ppm)**: Spray 5 ml/liter water at square/flowering initiation to disrupt oviposition.
+- **Neem Astra Spray**: Apply 200 L/acre of prepared indigenous Neem Astra during dusk.
+
+#### 🧪 3. Recommended Chemical Interventions (Targeted Window)
+- **Egg / Early Larval Stage**: Spray Profenofos 50% EC @ 2 ml/L or Thiodicarb 75% WP @ 2 g/L.
+- **Boll Penetration Stage**: Apply Emamectin Benzoate 5% SG @ 0.5 g/L or Spinetoram 11.7% SC @ 1 ml/L. Rotate MoA classes to combat resistance.`,
+      model: 'AgriSmart ICAR-CICR Agronomy Engine'
+    };
+  }
+
+  // 6. Natural Farming: Jeevamrut & Neem Astra Preparation
+  if (q.includes('jeevamrut') || q.includes('neem astra') || q.includes('natural farming') || q.includes('spnf') || q.includes('organic')) {
+    return {
+      reply: `### 🌱 Preparation of Indigenous Jeevamrut & Neem Astra (Subhash Palekar Natural Farming)
+
+Microbial bio-enhancers accelerate rhizosphere beneficial bacteria (*Azotobacter*, *Rhizobium*, Phosphate Solubilizing Bacteria) and enhance Indian soil health.
+
+#### 🥛 1. Liquid Jeevamrut Formulation (For 1 Acre / 200 Liters)
+- **Ingredients**:
+  - 10 kg Fresh Indigenous Cow Dung (*Desi Gai ka Gobar*)
+  - 5 to 10 Liters Cow Urine (*Gomutra*)
+  - 2 kg Organic Jaggery (*Gud*) or Sugarcane Juice
+  - 2 kg Pulse Flour (*Besan* - Gram/Pigeon Pea)
+  - 1 Handful Uncontaminated Forest / Farm Bund Soil
+  - 200 Liters Water in a non-metal drum
+- **Preparation**: Mix thoroughly clockwise with a wooden stick twice a day for 4 to 6 days under shade.
+- **Application**: Apply 200 L/acre via drip irrigation, flood channel, or as 10% foliar spray every 15–21 days.
+
+#### 🍃 2. Neem Astra Pest Repellent Formulation (For 1 Acre / 200 Liters)
+- **Ingredients**: 5 kg crushed Neem leaves (*Azadirachta indica*), 5 kg Neem seed powder, 5 L Gomutra, 2 kg fresh cow dung, 200 L water.
+- **Fermentation**: Stir and let ferment for 48 hours in shade. Filter through muslin cloth.
+- **Efficacy**: Controls sap-sucking pests (aphids, jassids, whiteflies, thrips, and early-stage borers).`,
+      model: 'AgriSmart Natural Farming Engine'
+    };
+  }
+
+  // 7. Rice / Paddy Blast Disease Management
+  if (q.includes('blast') || q.includes('paddy') || q.includes('rice') || q.includes('dhan')) {
+    return {
+      reply: `### 🌾 Prevention & Control of Blast Disease (*Magnaporthe oryzae*) in Paddy / Basmati
+
+Rice blast causes spindle-shaped spots on leaves, nodal rot, and catastrophic neck blast in high-humidity Basmati tracts.
+
+#### 🛡️ 1. Preventive & Cultural Practices
+- **Resistant Cultivars**: Cultivate tolerant varieties (e.g., Pusa Basmati 1509, Pusa Basmati 1121, MTU 1010).
+- **Seed Treatment**: Treat seeds with *Pseudomonas fluorescens* (10 g/kg seed) or Carbendazim 50% WP (2 g/kg seed) prior to nursery nursery sowing.
+- **Nitrogen Moderation**: Avoid excessive split applications of Urea (use recommended 4:2:1 NPK with Zinc Sulphate 25 kg/ha).
+
+#### 🧪 2. Recommended Curative Treatments
+- **Bio-Control**: Foliar spray of *Pseudomonas fluorescens* (0.2%) at tillering and panicle emergence.
+- **Standard Systemic Fungicide**: Spray Tricyclazole 75% WP @ 0.6 g/L OR Isoprothiolane 40% EC @ 1.5 ml/L at first sign of leaf blast spots. Repeat at 50% panicle emergence to safeguard against neck blast.`,
+      model: 'AgriSmart Indian Agronomy Engine'
+    };
+  }
+
+  // 8. Smart Soil Moisture Sensors & IoT Mesh
   if (q.includes('sensor') || q.includes('iot') || q.includes('moisture') || q.includes('mesh')) {
     return {
       reply: `### 🚜 Smart IoT Telemetry Mesh & Soil Sensor Deployment Guide
 
-Implementing a connected sensor network enables automated precision irrigation and real-time root zone analytics.
+Implementing a connected sensor network enables automated precision irrigation and real-time root zone analytics across Indian agro-climatic zones.
 
-#### 📡 1. Optimal Sensor Types
-- **Capacitive Frequency Domain Reflectometry (FDR) Probes**: Measure volumetric water content (VWC) accurately without susceptibility to soil salinity fluctuations.
-- **Soil Water Potential Tensionmeters**: Measure water tension (kPa/centibars) to determine actual crop suction effort required.
-- **Electrochemical NPK & pH Sensors**: Multi-depth continuous probes tracking nitrate (NO₃⁻) and potassium (K⁺) mobility.
+#### 📡 1. Optimal Sensor Types for Indian Soils
+- **Capacitive FDR Probes**: Accurate volumetric water content (VWC) measurements impervious to soil salinity in Black Cotton and Saline soils.
+- **Tensiometers**: Measure soil suction (20–35 kPa) to guide micro-irrigation under PM Krishi Sinchayee Yojana (PMKSY).
+- **Optical NPK Probes**: Real-time nitrogen, phosphorus, and potassium tracking to prevent fertilizer leaching.
 
 #### 🌐 2. Wireless Mesh & Hardware Architecture
-- **Protocol**: LoRaWAN sub-GHz radio (868 MHz / 915 MHz) for long-range (up to 10–15 km line-of-sight) transmission through thick crop canopies.
-- **Multi-Depth Probing**: Install dual/triple depth sensor nodes at **15 cm** (evaporation zone), **30 cm** (active root zone), and **60 cm** (drainage boundary).
-- **Power Node**: 2W solar panel coupled with a 3.7V 3000mAh LiFePO4 battery pack for 100% autonomous operation.`,
+- **Protocol**: LoRaWAN sub-GHz radio (865–867 MHz India band) for up to 12 km transmission across dense sugarcane and wheat canopies.
+- **Multi-Depth Nodes**: Dual-depth probing at **15 cm** (topsoil seedbed) and **45 cm** (deep root zone).
+- **Autonomous Power**: Solar-powered nodes with MPPT controllers and LiFePO4 batteries designed for monsoon and summer conditions.`,
       model: 'AgriSmart Precision Agronomy Engine'
     };
   }
@@ -265,18 +339,42 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: message }
     ];
 
-    const completion = await groq.chat.completions.create({
-      messages: formattedMessages,
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.4,
-      max_tokens: 1024,
-    });
+    const CANDIDATE_MODELS = [
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+      'allam-2-7b',
+      'llama-3.3-70b-versatile'
+    ];
+
+    let completion = null;
+    let selectedModel = '';
+
+    for (const model of CANDIDATE_MODELS) {
+      try {
+        completion = await groq.chat.completions.create({
+          messages: formattedMessages,
+          model,
+          temperature: 0.4,
+          max_tokens: 1024,
+        });
+        selectedModel = model;
+        break;
+      } catch (mErr) {
+        // Continue to next candidate model
+        continue;
+      }
+    }
+
+    if (!completion) {
+      throw new Error('All candidate Groq models failed or unavailable.');
+    }
 
     const reply = completion.choices[0]?.message?.content || 'No response generated.';
 
     res.json({
       reply,
-      model: 'llama-3.3-70b-versatile',
+      model: selectedModel,
       success: true
     });
   } catch (error) {
@@ -301,67 +399,79 @@ let telemetryState = {
   zones: [
     {
       id: 'zone-1',
-      name: 'North Field - Wheat & Grains',
-      crop: 'Wheat (Winter Variety)',
-      area: '14.5 Acres',
+      name: 'Punjab Granary — Indo-Gangetic Basin',
+      state: 'Punjab / Haryana',
+      soilType: 'Deep Alluvial Soil (जलोढ़ मिट्टी)',
+      crop: 'Sharbati Wheat (गेहूं - HD 2967)',
+      season: 'Rabi Season',
+      area: '25.0 Acres (10.1 Hectares)',
       soilMoisture: 42,
       soilTemp: 21.4,
       airHumidity: 58,
       airTemp: 24.8,
-      ph: 6.8,
-      npk: { n: 140, p: 48, k: 180 },
+      ph: 7.1,
+      npk: { n: 135, p: 52, k: 175 },
       sunlightLux: 48200,
-      battery: 94,
+      battery: 95,
       status: 'Optimal',
-      lastIrrigated: '2 hours ago'
+      lastIrrigated: '2 hours ago (Canal Sluice)'
     },
     {
       id: 'zone-2',
-      name: 'South Greenhouse - Tomatoes',
-      crop: 'Cherry Tomatoes',
-      area: '4.2 Acres',
-      soilMoisture: 65,
-      soilTemp: 23.1,
-      airHumidity: 72,
-      airTemp: 26.5,
-      ph: 6.2,
-      npk: { n: 110, p: 55, k: 210 },
-      sunlightLux: 52100,
-      battery: 88,
+      name: 'Deccan Plateau — Vidarbha Agri-Belt',
+      state: 'Maharashtra',
+      soilType: 'Black Cotton / Regur Soil (काली मिट्टी)',
+      crop: 'BT Cotton (कपास) & Yellow Soybean',
+      season: 'Kharif / Post-Monsoon',
+      area: '18.5 Acres (7.5 Hectares)',
+      soilMoisture: 36,
+      soilTemp: 26.2,
+      airHumidity: 52,
+      airTemp: 29.5,
+      ph: 7.8,
+      npk: { n: 110, p: 44, k: 215 },
+      sunlightLux: 56000,
+      battery: 91,
       status: 'Optimal',
-      lastIrrigated: '30 mins ago'
+      lastIrrigated: '6 hours ago (Drip Pulse)'
     },
     {
       id: 'zone-3',
-      name: 'East Orchard - Citrus & Apples',
-      crop: 'Organic Oranges',
-      area: '22.0 Acres',
-      soilMoisture: 28,
-      soilTemp: 27.2,
-      airHumidity: 44,
-      airTemp: 31.0,
-      ph: 7.4,
-      npk: { n: 85, p: 32, k: 140 },
-      sunlightLux: 61000,
-      battery: 76,
+      name: 'Saurashtra Semi-Arid Block — Rajkot',
+      state: 'Gujarat',
+      soilType: 'Sandy Loam & Calcareous (बलुई दोमट)',
+      crop: 'Groundnut (मूंगफली) & Yellow Mustard',
+      season: 'Rabi Season',
+      area: '20.0 Acres (8.1 Hectares)',
+      soilMoisture: 24,
+      soilTemp: 28.5,
+      airHumidity: 41,
+      airTemp: 32.0,
+      ph: 7.5,
+      npk: { n: 88, p: 36, k: 145 },
+      sunlightLux: 62500,
+      battery: 84,
       status: 'Attention Required',
-      lastIrrigated: '18 hours ago'
+      lastIrrigated: '19 hours ago'
     },
     {
       id: 'zone-4',
-      name: 'West Plot - Corn & Soybeans',
-      crop: 'Sweet Corn',
-      area: '18.8 Acres',
-      soilMoisture: 51,
+      name: 'Western Ghats Polyhouse — Bengaluru Rural',
+      state: 'Karnataka',
+      soilType: 'Red Laterite & Coco-Peat (लाल लेटेराइट)',
+      crop: 'Polyhouse Colored Capsicum & Cherry Tomatoes',
+      season: 'Year-Round Protected',
+      area: '6.0 Acres (2.4 Hectares)',
+      soilMoisture: 68,
       soilTemp: 22.8,
-      airHumidity: 62,
-      airTemp: 25.2,
-      ph: 6.5,
-      npk: { n: 165, p: 60, k: 195 },
-      sunlightLux: 45000,
+      airHumidity: 74,
+      airTemp: 25.0,
+      ph: 6.4,
+      npk: { n: 160, p: 65, k: 220 },
+      sunlightLux: 43000,
       battery: 99,
       status: 'Optimal',
-      lastIrrigated: '4 hours ago'
+      lastIrrigated: '45 mins ago (Automated Mist)'
     }
   ]
 };
@@ -455,56 +565,112 @@ app.post('/api/telemetry/irrigate-zone', (req, res) => {
 // ==========================================
 const CROP_DISEASES_DB = [
   {
-    id: 'blight-1',
-    name: 'Tomato Early Blight (Alternaria solani)',
-    affectedCrops: ['Tomatoes', 'Potatoes', 'Eggplants'],
-    symptoms: ['Concentric target-like rings on mature leaves', 'Yellow halo surrounding lesions', 'Stem cankers'],
-    confidence: 96.4,
-    severity: 'Moderate',
-    pathogenType: 'Fungal Pathogen',
-    incubationPeriod: '4 - 7 Days',
-    organicRemedy: 'Apply copper hydroxide spray or cold-pressed neem oil weekly. Prune lower foliage within 30cm of soil to stop splash spread.',
-    chemicalTreatment: 'Chlorothalonil or Mancozeb fungicide applied every 7-10 days upon early detection.',
-    prevention: 'Maintain drip irrigation to avoid foliar wetness. Practice 3-year crop rotation with non-solanaceous cover crops.'
-  },
-  {
-    id: 'rust-2',
-    name: 'Wheat Stripe Rust (Puccinia striiformis)',
-    affectedCrops: ['Wheat', 'Barley', 'Rye'],
-    symptoms: ['Linear yellow-orange pustules on leaf surface', 'Powdery spores on fingers when touched', 'Stunted grain fill'],
-    confidence: 94.2,
+    id: 'blast-rice',
+    name: 'Rice / Paddy Blast (Magnaporthe oryzae / झुलसा रोग)',
+    region: 'Indo-Gangetic Basin, Punjab, Andhra Pradesh, West Bengal',
+    affectedCrops: ['Basmati Rice', 'Paddy', 'Scented Rice'],
+    symptoms: [
+      'Spindle-shaped elliptical lesions with ash-grey centers and brown borders',
+      'Neck blast causing panicles to fall over and turn chaffy / whitish',
+      'Black necrotic lesions on leaf collars and stem nodes'
+    ],
+    confidence: 97.2,
     severity: 'High',
-    pathogenType: 'Airborne Basidiomycete',
-    incubationPeriod: '10 - 14 Days',
-    organicRemedy: 'Dust micronized sulfur powder during early morning dew. Utilize certified resistant cultivar varieties.',
-    chemicalTreatment: 'Triazole or Strobilurin-based systemic fungicides (e.g. Propiconazole or Tebuconazole).',
-    prevention: 'Eradicate volunteer cereal plants in off-season. Monitor weather alerts for spore-favorable cool, humid winds.'
+    pathogenType: 'Airborne Ascomycete Fungus',
+    incubationPeriod: '4 - 6 Days',
+    organicRemedy: 'Seed treatment with bio-agent Pseudomonas fluorescens (10 g/kg seed). Foliar spray of indigenous Neem Astra (200 L/acre) or fermented buttermilk (5 L in 100 L water) at early tillering.',
+    chemicalTreatment: 'Foliar spray of Tricyclazole 75% WP @ 0.6 g/L or Isoprothiolane 40% EC @ 1.5 ml/L at first appearance of leaf spots. Repeat spray at 50% panicle emergence to protect against neck blast.',
+    prevention: 'Cultivate ICAR/IARI blast-tolerant cultivars (Pusa Basmati 1509, PB 1121). Avoid excessive split applications of chemical urea.'
   },
   {
-    id: 'deficiency-3',
-    name: 'Nitrogen Deficiency (Chlorosis)',
-    affectedCrops: ['Corn', 'Wheat', 'Rice', 'Vegetables'],
-    symptoms: ['General pale green to yellowing of older lower leaves', 'V-shaped yellowing along midrib', 'Reduced tiller growth'],
-    confidence: 98.0,
-    severity: 'Low to Moderate',
-    pathogenType: 'Abiotic Nutrient Deficiency',
-    incubationPeriod: 'Gradual / Soil Depletion',
-    organicRemedy: 'Apply liquid fish hydrolysate, blood meal, or side-dress with well-rotted compost tea and worm castings.',
-    chemicalTreatment: 'Side-dress urea (46-0-0) or calcium ammonium nitrate at 35-50 kg/hectare based on grid soil test.',
-    prevention: 'Incorporate nitrogen-fixing legume cover crops (clover, vetch, cowpeas) during fallow periods.'
-  },
-  {
-    id: 'powdery-4',
-    name: 'Powdery Mildew (Erysiphe cichoracearum)',
-    affectedCrops: ['Cucumbers', 'Squash', 'Grapes', 'Apples', 'Melons'],
-    symptoms: ['White flour-like powdery patches on leaf upper surfaces', 'Curling leaves', 'Premature leaf drop'],
-    confidence: 95.8,
-    severity: 'Moderate',
-    pathogenType: 'Obligate Biotrophic Fungus',
+    id: 'bollworm-cotton',
+    name: 'Cotton Pink Bollworm (Pectinophora gossypiella / गुलाबी सुंडी)',
+    region: 'Vidarbha & Marathwada (Maharashtra), Saurashtra (Gujarat), Telangana',
+    affectedCrops: ['BT Cotton (कपास)', 'Desi Cotton', 'Okra / Bhindi'],
+    symptoms: [
+      'Rosette flowers with petals twisted and sealed in a tent shape',
+      'Premature boll opening and staining of cotton lint',
+      'Tiny entry pinholes in green bolls with inner seed destruction'
+    ],
+    confidence: 96.5,
+    severity: 'Critical',
+    pathogenType: 'Lepidopteran Insect Pest',
     incubationPeriod: '3 - 5 Days',
-    organicRemedy: 'Spray potassium bicarbonate solution (1 tbsp/gallon) with horticultural soap or bio-fungicide Bacillus subtilis.',
-    chemicalTreatment: 'Myclobutanil or Sulfur wettable powder applied at first sign of white spots.',
-    prevention: 'Ensure high sunlight penetration, avoid excessive nitrogen, and prune canopy to maximize air circulation.'
+    organicRemedy: 'Deploy Gossyplure pheromone traps (5-8 traps/acre) to monitor adult male moths. Release Trichogrammatoidea bactrae egg parasitoids @ 60,000/acre. Spray cold-pressed 5% NSKE (Neem Seed Kernel Extract).',
+    chemicalTreatment: 'If trap catch exceeds 8 moths/trap/night for 3 consecutive days: Spray Profenofos 50% EC @ 2 ml/L or Emamectin Benzoate 5% SG @ 0.5 g/L during early square/boll formation.',
+    prevention: 'Strictly observe a 4-month cotton-free closed season. Avoid ratooning of cotton crop; shred and incorporate crop residue into soil using rotavator.'
+  },
+  {
+    id: 'rust-wheat',
+    name: 'Wheat Stripe Yellow Rust (Puccinia striiformis / पीला रतुआ)',
+    region: 'Punjab, Haryana, Western Uttar Pradesh, Terai Foothills',
+    affectedCrops: ['Sharbati Wheat (गेहूं)', 'Durum Wheat', 'Barley'],
+    symptoms: [
+      'Bright yellow linear powdery stripes running parallel to leaf veins',
+      'Yellow urediniospores rubbing off on fingers like turmeric powder',
+      'Severe chlorosis causing shriveled grain fill and yield drop up to 40%'
+    ],
+    confidence: 95.8,
+    severity: 'High',
+    pathogenType: 'Airborne Basidiomycete Rust Fungus',
+    incubationPeriod: '7 - 12 Days',
+    organicRemedy: 'Dust micronized elemental sulfur (300 mesh) @ 20-25 kg/ha during morning dew. Spray fermented liquid Jeevamrut (10% concentration) to boost systemic foliar resistance.',
+    chemicalTreatment: 'Immediate uniform spray of Propiconazole 25% EC (Tilt) @ 1 ml/L or Tebuconazole 25.9% EC @ 1.25 ml/L in 200 liters of water per acre.',
+    prevention: 'Sow yellow-rust resistant wheat varieties certified by PAU / ICAR (PBW 725, HD 3086, DBW 187, DBW 222). Avoid late sowing after November 25.'
+  },
+  {
+    id: 'leafcurl-chilli-tomato',
+    name: 'Tomato & Chilli Leaf Curl Virus (Begomovirus / पत्ती मरोड़ रोग)',
+    region: 'Pan-India (Karnataka, Maharashtra, Andhra Pradesh, MP, Rajasthan)',
+    affectedCrops: ['Tomatoes (टमाटर)', 'Green Chillies (मिर्च)', 'Capsicum / Shimla Mirch', 'Papaya'],
+    symptoms: [
+      'Severe upward curling and crinkling of leaf margins',
+      'Shortened internodes resulting in bushy, stunted plant architecture',
+      'Flower drop and production of small, deformed, unmarketable fruits'
+    ],
+    confidence: 98.1,
+    severity: 'High',
+    pathogenType: 'Viral Complex (Transmitted by Whitefly Bemisia tabaci)',
+    incubationPeriod: '10 - 15 Days',
+    organicRemedy: 'Install bright Yellow Sticky Traps (12-15 traps/acre) at crop canopy level. Spray 5% Neem Seed Kernel Extract (NSKE) or Agniastra @ 5 ml/L every 10 days to repel vector whiteflies.',
+    chemicalTreatment: 'To control whitefly vector: Foliar spray of Diafenthiuron 50% WP @ 1.2 g/L or Spiromesifen 22.9% SC @ 1 ml/L. Drench nursery seedlings with Imidacloprid 17.8% SL (0.5 ml/L).',
+    prevention: 'Erect 40-mesh insect-proof nylon nets over nursery beds. Surround farm borders with 3 rows of tall barrier crops (Maize, Jowar, or Bajra).'
+  },
+  {
+    id: 'redrot-sugarcane',
+    name: 'Sugarcane Red Rot (Colletotrichum falcatum / गन्ने का लाल सड़न)',
+    region: 'Western Uttar Pradesh, Bihar, Haryana, Maharashtra',
+    affectedCrops: ['Sugarcane (गन्ना - Co 0238, Co 0118)'],
+    symptoms: [
+      'Third and fourth leaf from top showing yellowing and drying along midrib',
+      'Splitting cane longitudinally reveals red pith with characteristic white transverse patches',
+      'Alcoholic or sour acidic fermenting odor inside infected stalks'
+    ],
+    confidence: 94.6,
+    severity: 'Critical',
+    pathogenType: 'Seed-borne & Soil-borne Fungal Pathogen',
+    incubationPeriod: '2 - 3 Weeks',
+    organicRemedy: 'Soil enrichment with Trichoderma viride or Trichoderma harzianum @ 5 kg mixed in 500 kg well-rotted farmyard manure (FYM) per acre prior to furrow preparation.',
+    chemicalTreatment: 'Sett treatment before planting: Dip two-bud setts in Carbendazim 50% WP (1 g/L) or Thiophanate Methyl 70% WP (1 g/L) solution for 15 minutes.',
+    prevention: 'Use disease-free seed canes from certified nurseries. Practice mandatory 2-year crop rotation with Paddy or legumes; eradicate infected stool root clumps.'
+  },
+  {
+    id: 'deficiency-nitrogen',
+    name: 'Nitrogen & Zinc Deficiency (Nutrient Chlorosis / नत्रजन व जस्ते की कमी)',
+    region: 'Gangetic Alluvial Soils & Alkaline Calcareous Tracts',
+    affectedCrops: ['Wheat', 'Maize', 'Paddy', 'Mustard', 'Vegetables'],
+    symptoms: [
+      'V-shaped chlorotic yellowing progressing from leaf tip backward along midrib on older leaves',
+      'Khaira disease symptoms in paddy: rusty brown pigmentation on young leaves 2-3 weeks after transplanting',
+      'Reduced tillering and stunted crop canopy growth'
+    ],
+    confidence: 98.7,
+    severity: 'Moderate',
+    pathogenType: 'Abiotic Macro & Micro-Nutrient Deficiency',
+    incubationPeriod: 'Progressive Soil Depletion',
+    organicRemedy: 'Foliar application of Liquid Jeevamrut (200 L/acre) or vermicompost wash. Inoculate with Azotobacter and Azospirillum biofertilizers.',
+    chemicalTreatment: 'Apply 2 foliar sprays of IFFCO Nano Urea (4 ml/L water) during tillering. For Zinc deficiency: Foliar spray of Zinc Sulfate Heptahydrate 21% @ 5 g/L mixed with 2.5 g unslaked lime.',
+    prevention: 'Adhere to Soil Health Card guidelines. Maintain recommended 4:2:1 NPK balance and incorporate green manure (Dhaincha - Sesbania aculeata) before Kharif.'
   }
 ];
 
@@ -542,105 +708,169 @@ app.post('/api/crop-health/analyze', (req, res) => {
 // 4. Market Commodity Prices Endpoint (with Multi-Currency & Sparklines)
 // ==========================================
 const CURRENCY_RATES = {
-  USD: { symbol: '$', rate: 1.0 },
-  EUR: { symbol: '€', rate: 0.92 },
-  INR: { symbol: '₹', rate: 83.5 },
-  GBP: { symbol: '£', rate: 0.78 },
-  CAD: { symbol: 'C$', rate: 1.36 }
+  INR: { symbol: '₹', rate: 1.0, label: 'Indian Rupee (₹)' },
+  USD: { symbol: '$', rate: 0.012, label: 'US Dollar ($)' },
+  EUR: { symbol: '€', rate: 0.011, label: 'Euro (€)' },
+  GBP: { symbol: '£', rate: 0.0093, label: 'British Pound (£)' },
+  CAD: { symbol: 'C$', rate: 0.016, label: 'Canadian Dollar (C$)' }
 };
 
 const BASE_COMMODITIES = [
   { 
     id: 'c-1', 
-    name: 'Hard Red Winter Wheat', 
+    name: 'Sharbati Wheat (शरबती गेहूं)', 
     category: 'Grains', 
-    unit: 'Bushel', 
-    basePrice: 6.42, 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 2450, 
+    mandi: 'Khanna Mandi, Punjab (APMC)',
+    state: 'Punjab',
+    season: 'Rabi Season (रबी)',
+    msp: 2275,
+    mspStatus: 'Above MSP (+₹175)',
     change24h: +1.8, 
     trend: 'up', 
     sentiment: 'Bullish',
-    history7d: [6.15, 6.22, 6.28, 6.35, 6.30, 6.38, 6.42],
-    advice: 'Hold / Favorable Export Demand in North Africa & Middle East' 
+    history7d: [2380, 2400, 2415, 2430, 2420, 2445, 2450],
+    advice: 'High flour mill demand; Hold inventory for peak off-season procurement prices.' 
   },
   { 
     id: 'c-2', 
-    name: 'Yellow Corn #2', 
+    name: 'Basmati 1121 Paddy (बासमती धान)', 
     category: 'Grains', 
-    unit: 'Bushel', 
-    basePrice: 4.85, 
-    change24h: -0.6, 
-    trend: 'down', 
-    sentiment: 'Bearish',
-    history7d: [5.02, 4.98, 4.95, 4.90, 4.92, 4.88, 4.85],
-    advice: 'Sell Surplus / Good Midwest Harvest Yield Suppressing Spot Price' 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 3890, 
+    mandi: 'Karnal Mandi, Haryana (APMC)',
+    state: 'Haryana',
+    season: 'Kharif Season (खरीफ)',
+    msp: 2320,
+    mspStatus: 'Premium Grade (+₹1,570)',
+    change24h: +3.4, 
+    trend: 'up', 
+    sentiment: 'Strong Buy',
+    history7d: [3720, 3760, 3790, 3820, 3850, 3870, 3890],
+    advice: 'Robust Gulf & Middle East export orders; Certified aged lots commanding higher premium.' 
   },
   { 
     id: 'c-3', 
-    name: 'Basmati Rice (Rough)', 
-    category: 'Grains', 
-    unit: 'Cwt', 
-    basePrice: 17.30, 
-    change24h: +3.2, 
-    trend: 'up', 
-    sentiment: 'Strong Buy',
-    history7d: [16.20, 16.45, 16.70, 16.85, 17.00, 17.15, 17.30],
-    advice: 'Strong Local & Regional Demand; Premium Export Grade' 
+    name: 'Shankar-6 Raw Cotton (कपास)', 
+    category: 'Cash Crops', 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 7140, 
+    mandi: 'Rajkot APMC, Gujarat',
+    state: 'Gujarat',
+    season: 'Kharif Season (खरीफ)',
+    msp: 6620,
+    mspStatus: 'Above MSP (+₹520)',
+    change24h: -0.8, 
+    trend: 'down', 
+    sentiment: 'Hold',
+    history7d: [7280, 7240, 7200, 7180, 7210, 7160, 7140],
+    advice: 'Spinning mill procurement moderate; Await Cotton Corporation of India (CCI) support tender.' 
   },
   { 
     id: 'c-4', 
-    name: 'Soybeans Grade A', 
+    name: 'Yellow Mustard / Sarson (सरसों)', 
     category: 'Oilseeds', 
-    unit: 'Bushel', 
-    basePrice: 12.15, 
-    change24h: +0.4, 
-    trend: 'up', 
-    sentiment: 'Neutral',
-    history7d: [11.95, 12.00, 12.05, 12.10, 12.08, 12.12, 12.15],
-    advice: 'Steady Commercial Purchasing for Biofuel & Livestock Meal' 
-  },
-  { 
-    id: 'c-5', 
-    name: 'High-Grade Cotton', 
-    category: 'Cash Crops', 
-    unit: 'Pound', 
-    basePrice: 0.84, 
-    change24h: -1.2, 
-    trend: 'down', 
-    sentiment: 'Hold',
-    history7d: [0.89, 0.88, 0.86, 0.85, 0.86, 0.85, 0.84],
-    advice: 'Monitor Mill Buying Sentiment; Await Post-Holiday Textile Orders' 
-  },
-  { 
-    id: 'c-6', 
-    name: 'Malting Barley', 
-    category: 'Grains', 
-    unit: 'Bushel', 
-    basePrice: 5.75, 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 5720, 
+    mandi: 'Bharatpur Mandi, Rajasthan (APMC)',
+    state: 'Rajasthan',
+    season: 'Rabi Season (रबी)',
+    msp: 5650,
+    mspStatus: 'Above MSP (+₹70)',
     change24h: +2.1, 
     trend: 'up', 
     sentiment: 'Bullish',
-    history7d: [5.45, 5.50, 5.58, 5.62, 5.65, 5.70, 5.75],
-    advice: 'Brewery Demand High; Contract Locking Highly Recommended' 
+    history7d: [5580, 5610, 5650, 5680, 5670, 5700, 5720],
+    advice: 'Domestic edible oil mill crushing active; Spot demand supporting steady appreciation.' 
+  },
+  { 
+    id: 'c-5', 
+    name: 'Desi Chana / Chickpea (चना)', 
+    category: 'Pulses', 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 6180, 
+    mandi: 'Indore Mandi, Madhya Pradesh (APMC)',
+    state: 'Madhya Pradesh',
+    season: 'Rabi Season (रबी)',
+    msp: 5440,
+    mspStatus: 'Above MSP (+₹740)',
+    change24h: +1.5, 
+    trend: 'up', 
+    sentiment: 'Bullish',
+    history7d: [5980, 6020, 6070, 6110, 6130, 6160, 6180],
+    advice: 'Buffer stock procurement strong; Recommend phased staggered selling across mandis.' 
+  },
+  { 
+    id: 'c-6', 
+    name: 'Nashik Red Onion (लाल प्याज)', 
+    category: 'Vegetables', 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 1980, 
+    mandi: 'Lasalgaon APMC, Maharashtra',
+    state: 'Maharashtra',
+    season: 'Rabi Season (रबी)',
+    msp: null,
+    mspStatus: 'Market Spot Rate',
+    change24h: -2.3, 
+    trend: 'down', 
+    sentiment: 'Neutral',
+    history7d: [2150, 2100, 2060, 2020, 2040, 2000, 1980],
+    advice: 'Heavy daily mandi arrivals; Store well-cured bulbs in ventilated kanda chawls to hedge against slump.' 
+  },
+  { 
+    id: 'c-7', 
+    name: 'Sugarcane Co-0238 (गन्ना)', 
+    category: 'Cash Crops', 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 385, 
+    mandi: 'Muzaffarnagar APMC, Western UP',
+    state: 'Uttar Pradesh',
+    season: 'Annual (सालाना)',
+    msp: 340,
+    mspStatus: 'Above FRP (+₹45)',
+    change24h: +0.0, 
+    trend: 'up', 
+    sentiment: 'Bullish',
+    history7d: [380, 380, 385, 385, 385, 385, 385],
+    advice: 'Sugar mill crushing season at peak; Ensure timely gate-delivery per mill indents.' 
+  },
+  { 
+    id: 'c-8', 
+    name: 'Yellow Soybean JS-335 (सोयाबीन)', 
+    category: 'Oilseeds', 
+    unit: 'Quintal (100 kg)', 
+    basePrice: 4520, 
+    mandi: 'Ujjain APMC, Madhya Pradesh',
+    state: 'Madhya Pradesh',
+    season: 'Kharif Season (खरीफ)',
+    msp: 4600,
+    mspStatus: 'Near MSP (-₹80)',
+    change24h: +0.6, 
+    trend: 'up', 
+    sentiment: 'Hold',
+    history7d: [4450, 4470, 4490, 4510, 4500, 4515, 4520],
+    advice: 'Solvent extraction plant demand stable; Avail warehouse receipt (e-NWR) pledge finance.' 
   }
 ];
 
 app.get('/api/market-prices', (req, res) => {
-  const requestedCurrency = (req.query.currency || 'USD').toUpperCase();
-  const currInfo = CURRENCY_RATES[requestedCurrency] || CURRENCY_RATES.USD;
+  const requestedCurrency = (req.query.currency || 'INR').toUpperCase();
+  const currInfo = CURRENCY_RATES[requestedCurrency] || CURRENCY_RATES.INR;
   const rate = currInfo.rate;
 
   const commodities = BASE_COMMODITIES.map(c => ({
     ...c,
-    price: parseFloat((c.basePrice * rate).toFixed(2)),
+    price: requestedCurrency === 'INR' ? c.basePrice : parseFloat((c.basePrice * rate).toFixed(2)),
     symbol: currInfo.symbol,
-    history7d: c.history7d.map(val => parseFloat((val * rate).toFixed(2)))
+    history7d: c.history7d.map(val => requestedCurrency === 'INR' ? val : parseFloat((val * rate).toFixed(2)))
   }));
 
   res.json({
     updatedAt: new Date().toISOString(),
     currency: requestedCurrency,
     symbol: currInfo.symbol,
-    currenciesAvailable: ['USD', 'EUR', 'INR', 'GBP', 'CAD'],
+    currenciesAvailable: ['INR', 'USD', 'EUR', 'GBP', 'CAD'],
     commodities
   });
 });
@@ -656,15 +886,26 @@ let farmControlsState = {
     zone3Active: false, 
     zone4Active: true,
     scheduledDurationMin: 45,
-    waterPressureBar: 2.8
+    waterPressureBar: 2.8,
+    scheme: 'PM Krishi Sinchayee Yojana (PMKSY Drip)'
   },
   droneSprayer: { 
     status: 'STANDBY', 
+    model: 'Kisan Drone UAV (10L Hexacopter)',
     battery: 96, 
-    payload: 'Neem Organic Solution 85%', 
-    lastMission: 'Yesterday 06:00 AM',
-    flightAltitudeMeters: 3.5,
-    sprayCoverageHa: 12.4
+    payload: 'IFFCO Nano Urea & Bio-Pesticide (Neem Astra)', 
+    lastMission: 'Yesterday 06:30 AM (Vidarbha Plot)',
+    flightAltitudeMeters: 3.2,
+    sprayCoverageHa: 10.5,
+    nozzleFlowRate: '1.8 L/min'
+  },
+  solarPump: {
+    status: 'ACTIVE',
+    scheme: 'PM-KUSUM 7.5 HP Solar Submersible Pump',
+    dischargeLpm: 340,
+    solarPowerKw: 6.8,
+    frequencyHz: 48.5,
+    gridBackup: 'Hybrid Solar-Grid Active'
   },
   greenhouseVentilation: { 
     status: 'ACTIVE', 
@@ -676,7 +917,12 @@ let farmControlsState = {
     mistFogger: true,
     exhaustFan: true
   },
-  soilSensorsMesh: { status: 'HEALTHY', activeNodes: 48, pollingIntervalSec: 15 }
+  soilSensorsMesh: { 
+    status: 'HEALTHY', 
+    activeNodes: 48, 
+    frequencyBand: '865-867 MHz (India LoRaWAN Mesh)', 
+    pollingIntervalSec: 15 
+  }
 };
 
 app.get('/api/farm-controls', (req, res) => {
