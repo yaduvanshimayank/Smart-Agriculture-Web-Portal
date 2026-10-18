@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { Key, CheckCircle, Shield, ExternalLink, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Key, CheckCircle, Shield, ExternalLink, X, Trash2 } from 'lucide-react';
 
 export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
   const [inputKey, setInputKey] = useState(apiKey || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
+
+  useEffect(() => {
+    setInputKey(apiKey || '');
+  }, [apiKey, isOpen]);
 
   if (!isOpen) return null;
 
@@ -14,15 +18,21 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
     setTimeout(() => {
       setSavedSuccess(false);
       onClose();
-    }, 1200);
+    }, 900);
+  };
+
+  const handleClear = () => {
+    setInputKey('');
+    onSaveKey('');
+    onClose();
   };
 
   return (
     <div style={{
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      backdropFilter: 'blur(8px)',
+      backgroundColor: 'rgba(0, 0, 0, 0.82)',
+      backdropFilter: 'blur(10px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -34,7 +44,8 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
         maxWidth: '520px',
         padding: '2rem',
         position: 'relative',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
+        boxShadow: '0 25px 60px rgba(0,0,0,0.85)',
+        border: '1px solid var(--border-emerald-glow)'
       }}>
         <button 
           onClick={onClose}
@@ -57,18 +68,18 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             <Key size={22} />
           </div>
           <div>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: '700' }}>Configure Groq API Key</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Powers AgriGroq AI Precision Assistant</p>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#fff' }}>Configure Groq API Key</h3>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Powers AgriGroq AI Precision Assistant</p>
           </div>
         </div>
 
-        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.2rem', lineHeight: '1.5' }}>
-          Enter your Groq API key to unlock real-time agricultural answers powered by <strong>llama-3.3-70b-versatile</strong>. Your API key is stored securely in your browser session.
+        <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.2rem', lineHeight: '1.5' }}>
+          Enter your Groq API key to unlock real-time agricultural answers powered by <strong>llama-3.3-70b-versatile</strong>. Your API key is stored securely in your browser session. If left blank, the portal operates seamlessly using the built-in Smart Agronomy Engine.
         </p>
 
         <form onSubmit={handleSave}>
           <div style={{ marginBottom: '1.2rem' }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--emerald-light)' }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', marginBottom: '0.4rem', color: 'var(--emerald-light)' }}>
               Groq API Key (gsk_...)
             </label>
             <input 
@@ -79,12 +90,12 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
               style={{
                 width: '100%',
                 padding: '0.75rem 1rem',
-                backgroundColor: 'rgba(5, 20, 14, 0.9)',
+                backgroundColor: 'rgba(3, 14, 9, 0.95)',
                 border: '1px solid var(--border-emerald)',
                 borderRadius: '10px',
                 color: 'var(--text-main)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.9rem',
+                fontSize: '0.88rem',
                 outline: 'none'
               }}
             />
@@ -95,25 +106,30 @@ export default function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             backgroundColor: 'rgba(16, 185, 129, 0.06)',
             borderRadius: '10px',
             border: '1px dashed var(--border-emerald)',
-            marginBottom: '1.5rem',
+            marginBottom: '1.4rem',
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontSize: '0.8rem',
+            fontSize: '0.78rem',
             color: 'var(--text-muted)'
           }}>
             <Shield size={18} style={{ color: 'var(--emerald-main)', flexShrink: 0 }} />
-            <span>Don't have a key? Get a free API key at <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" style={{ color: 'var(--emerald-light)', textDecoration: 'underline' }}>console.groq.com <ExternalLink size={12} style={{ display: 'inline' }} /></a></span>
+            <span>Don't have a key? Get a free API key at <a href="https://console.groq.com/keys" target="_blank" rel="noreferrer" style={{ color: 'var(--emerald-light)', textDecoration: 'underline' }}>console.groq.com <ExternalLink size={11} style={{ display: 'inline' }} /></a></span>
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            {apiKey && (
+              <button type="button" className="btn-danger" onClick={handleClear} style={{ marginRight: 'auto' }}>
+                <Trash2 size={14} /> Clear Key
+              </button>
+            )}
             <button type="button" className="btn-outline" onClick={onClose}>
               Cancel
             </button>
             <button type="submit" className="btn-emerald">
               {savedSuccess ? (
                 <>
-                  <CheckCircle size={18} /> Saved!
+                  <CheckCircle size={16} /> Saved!
                 </>
               ) : (
                 'Save Key & Activate'

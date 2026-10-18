@@ -5,10 +5,11 @@ import Groq from 'groq-sdk';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -365,7 +366,43 @@ let telemetryState = {
   ]
 };
 
+// Real-time dynamic history generator based on time range
+function generateHistoricalTelemetry(range) {
+  if (range === '7d') {
+    return [
+      { time: '6d ago', moisture: 38.2, temp: 20.1, humidity: 62 },
+      { time: '5d ago', moisture: 41.5, temp: 21.0, humidity: 65 },
+      { time: '4d ago', moisture: 47.0, temp: 19.8, humidity: 74 },
+      { time: '3d ago', moisture: 44.8, temp: 22.3, humidity: 68 },
+      { time: '2d ago', moisture: 40.1, temp: 24.1, humidity: 59 },
+      { time: 'Yesterday', moisture: 43.6, temp: 23.5, humidity: 63 },
+      { time: 'Today', moisture: 46.5, temp: 22.8, humidity: 64 }
+    ];
+  } else if (range === '30d') {
+    return [
+      { time: 'Week 1', moisture: 45.0, temp: 18.2, humidity: 70 },
+      { time: 'Week 2', moisture: 42.1, temp: 19.5, humidity: 66 },
+      { time: 'Week 3', moisture: 49.3, temp: 21.4, humidity: 75 },
+      { time: 'Week 4', moisture: 43.8, temp: 23.2, humidity: 61 },
+      { time: 'Week 5', moisture: 41.2, temp: 24.0, humidity: 58 },
+      { time: 'Current', moisture: 46.5, temp: 22.8, humidity: 64 }
+    ];
+  }
+  // Default 24h
+  return [
+    { time: '00:00', moisture: 42.0, temp: 18.5, humidity: 72 },
+    { time: '04:00', moisture: 41.2, temp: 17.8, humidity: 76 },
+    { time: '08:00', moisture: 48.4, temp: 21.2, humidity: 68 },
+    { time: '12:00', moisture: 44.1, temp: 26.4, humidity: 54 },
+    { time: '16:00', moisture: 39.5, temp: 25.1, humidity: 59 },
+    { time: '20:00', moisture: 46.0, temp: 20.3, humidity: 71 },
+    { time: 'Now', moisture: 46.5, temp: 22.4, humidity: 64.2 }
+  ];
+}
+
 app.get('/api/telemetry', (req, res) => {
+  const range = req.query.range || '24h';
+
   // Add subtle realistic fluctuation on each request
   const updatedZones = telemetryState.zones.map(z => {
     const moistureDelta = (Math.random() - 0.5) * 1.2;
@@ -392,10 +429,25 @@ app.get('/api/telemetry', (req, res) => {
   res.json({
     timestamp: new Date().toISOString(),
     zones: updatedZones,
-    overallHealthIndex: 92,
+    overallHealthIndex: 94.8,
     activeSensors: 48,
-    onlineNodes: 48
+    onlineNodes: 48,
+    range,
+    history: generateHistoricalTelemetry(range)
   });
+});
+
+// Quick action to irrigate a specific zone
+app.post('/api/telemetry/irrigate-zone', (req, res) => {
+  const { zoneId } = req.body;
+  const targetZone = telemetryState.zones.find(z => z.id === zoneId);
+  if (targetZone) {
+    targetZone.soilMoisture = Math.min(85, parseFloat((targetZone.soilMoisture + 16.5).toFixed(1)));
+    targetZone.status = 'Optimal';
+    targetZone.lastIrrigated = 'Just now (Automated Pulse)';
+    return res.json({ success: true, zone: targetZone, message: `Pulsed irrigation applied to ${targetZone.name}` });
+  }
+  res.status(404).json({ error: 'Zone not found' });
 });
 
 // ==========================================
@@ -405,59 +457,75 @@ const CROP_DISEASES_DB = [
   {
     id: 'blight-1',
     name: 'Tomato Early Blight (Alternaria solani)',
-    affectedCrops: ['Tomatoes', 'Potatoes'],
+    affectedCrops: ['Tomatoes', 'Potatoes', 'Eggplants'],
     symptoms: ['Concentric target-like rings on mature leaves', 'Yellow halo surrounding lesions', 'Stem cankers'],
-    confidence: 94.6,
+    confidence: 96.4,
     severity: 'Moderate',
-    organicRemedy: 'Apply copper hydroxide spray or neem oil weekly. Prune lower infected foliage to prevent soil splash spread.',
+    pathogenType: 'Fungal Pathogen',
+    incubationPeriod: '4 - 7 Days',
+    organicRemedy: 'Apply copper hydroxide spray or cold-pressed neem oil weekly. Prune lower foliage within 30cm of soil to stop splash spread.',
     chemicalTreatment: 'Chlorothalonil or Mancozeb fungicide applied every 7-10 days upon early detection.',
-    prevention: 'Maintain drip irrigation to avoid wet leaves, practice 3-year crop rotation with non-solanaceous crops.'
+    prevention: 'Maintain drip irrigation to avoid foliar wetness. Practice 3-year crop rotation with non-solanaceous cover crops.'
   },
   {
     id: 'rust-2',
     name: 'Wheat Stripe Rust (Puccinia striiformis)',
-    affectedCrops: ['Wheat', 'Barley'],
+    affectedCrops: ['Wheat', 'Barley', 'Rye'],
     symptoms: ['Linear yellow-orange pustules on leaf surface', 'Powdery spores on fingers when touched', 'Stunted grain fill'],
-    confidence: 91.2,
+    confidence: 94.2,
     severity: 'High',
-    organicRemedy: 'Dust sulfur powder during early morning dew. Utilize resistant cultivar varieties.',
-    chemicalTreatment: 'Triazole or Strobiling-based systemic fungicides (e.g. Propiconazole or Tebuconazole).',
-    prevention: 'Destroy volunteer wheat plants in off-season, plant rust-resistant seed strains.'
+    pathogenType: 'Airborne Basidiomycete',
+    incubationPeriod: '10 - 14 Days',
+    organicRemedy: 'Dust micronized sulfur powder during early morning dew. Utilize certified resistant cultivar varieties.',
+    chemicalTreatment: 'Triazole or Strobilurin-based systemic fungicides (e.g. Propiconazole or Tebuconazole).',
+    prevention: 'Eradicate volunteer cereal plants in off-season. Monitor weather alerts for spore-favorable cool, humid winds.'
   },
   {
     id: 'deficiency-3',
     name: 'Nitrogen Deficiency (Chlorosis)',
     affectedCrops: ['Corn', 'Wheat', 'Rice', 'Vegetables'],
     symptoms: ['General pale green to yellowing of older lower leaves', 'V-shaped yellowing along midrib', 'Reduced tiller growth'],
-    confidence: 97.0,
+    confidence: 98.0,
     severity: 'Low to Moderate',
-    organicRemedy: 'Apply liquid fish hydrolysate, blood meal, or side-dress with well-rotted compost tea.',
-    chemicalTreatment: 'Side-dress urea (46-0-0) or ammonium nitrate at 30-50 kg/hectare based on soil test.',
-    prevention: 'Incorporate nitrogen-fixing cover crops (clover, vetch) during fallow periods.'
+    pathogenType: 'Abiotic Nutrient Deficiency',
+    incubationPeriod: 'Gradual / Soil Depletion',
+    organicRemedy: 'Apply liquid fish hydrolysate, blood meal, or side-dress with well-rotted compost tea and worm castings.',
+    chemicalTreatment: 'Side-dress urea (46-0-0) or calcium ammonium nitrate at 35-50 kg/hectare based on grid soil test.',
+    prevention: 'Incorporate nitrogen-fixing legume cover crops (clover, vetch, cowpeas) during fallow periods.'
   },
   {
     id: 'powdery-4',
     name: 'Powdery Mildew (Erysiphe cichoracearum)',
-    affectedCrops: ['Cucumbers', 'Squash', 'Grapes', 'Apples'],
+    affectedCrops: ['Cucumbers', 'Squash', 'Grapes', 'Apples', 'Melons'],
     symptoms: ['White flour-like powdery patches on leaf upper surfaces', 'Curling leaves', 'Premature leaf drop'],
-    confidence: 93.8,
+    confidence: 95.8,
     severity: 'Moderate',
-    organicRemedy: 'Spray potassium bicarbonate solution (1 tbsp/gallon) with horticultural soap or potassium silicate.',
-    chemicalTreatment: 'Myclobutanil or Sulfur wettable powder applied at first sign.',
-    prevention: 'Ensure high sunlight penetration and selective canopy pruning for air flow.'
+    pathogenType: 'Obligate Biotrophic Fungus',
+    incubationPeriod: '3 - 5 Days',
+    organicRemedy: 'Spray potassium bicarbonate solution (1 tbsp/gallon) with horticultural soap or bio-fungicide Bacillus subtilis.',
+    chemicalTreatment: 'Myclobutanil or Sulfur wettable powder applied at first sign of white spots.',
+    prevention: 'Ensure high sunlight penetration, avoid excessive nitrogen, and prune canopy to maximize air circulation.'
   }
 ];
 
 app.post('/api/crop-health/analyze', (req, res) => {
-  const { symptom, cropType } = req.body;
+  const { symptom, cropType, fileName } = req.body;
+  
+  const queryStr = `${symptom || ''} ${cropType || ''} ${fileName || ''}`.toLowerCase();
   
   // Pick matching disease or fallback
   let match = CROP_DISEASES_DB.find(d => 
-    symptom && d.name.toLowerCase().includes(symptom.toLowerCase())
+    queryStr && (
+      d.name.toLowerCase().includes(queryStr) || 
+      d.affectedCrops.some(c => queryStr.includes(c.toLowerCase())) ||
+      (queryStr.includes('blight') && d.id.includes('blight')) ||
+      (queryStr.includes('rust') && d.id.includes('rust')) ||
+      (queryStr.includes('nitrogen') && d.id.includes('deficiency')) ||
+      (queryStr.includes('powdery') && d.id.includes('powdery'))
+    )
   );
 
   if (!match) {
-    // Random select for interactive demo
     const idx = Math.floor(Math.random() * CROP_DISEASES_DB.length);
     match = CROP_DISEASES_DB[idx];
   }
@@ -465,24 +533,115 @@ app.post('/api/crop-health/analyze', (req, res) => {
   res.json({
     success: true,
     diagnosis: match,
-    scannedAt: new Date().toISOString()
+    scannedAt: new Date().toISOString(),
+    imageMeta: fileName ? { fileName, status: 'Cellular Analysis Verified' } : null
   });
 });
 
 // ==========================================
-// 4. Market Commodity Prices Endpoint
+// 4. Market Commodity Prices Endpoint (with Multi-Currency & Sparklines)
 // ==========================================
+const CURRENCY_RATES = {
+  USD: { symbol: '$', rate: 1.0 },
+  EUR: { symbol: '€', rate: 0.92 },
+  INR: { symbol: '₹', rate: 83.5 },
+  GBP: { symbol: '£', rate: 0.78 },
+  CAD: { symbol: 'C$', rate: 1.36 }
+};
+
+const BASE_COMMODITIES = [
+  { 
+    id: 'c-1', 
+    name: 'Hard Red Winter Wheat', 
+    category: 'Grains', 
+    unit: 'Bushel', 
+    basePrice: 6.42, 
+    change24h: +1.8, 
+    trend: 'up', 
+    sentiment: 'Bullish',
+    history7d: [6.15, 6.22, 6.28, 6.35, 6.30, 6.38, 6.42],
+    advice: 'Hold / Favorable Export Demand in North Africa & Middle East' 
+  },
+  { 
+    id: 'c-2', 
+    name: 'Yellow Corn #2', 
+    category: 'Grains', 
+    unit: 'Bushel', 
+    basePrice: 4.85, 
+    change24h: -0.6, 
+    trend: 'down', 
+    sentiment: 'Bearish',
+    history7d: [5.02, 4.98, 4.95, 4.90, 4.92, 4.88, 4.85],
+    advice: 'Sell Surplus / Good Midwest Harvest Yield Suppressing Spot Price' 
+  },
+  { 
+    id: 'c-3', 
+    name: 'Basmati Rice (Rough)', 
+    category: 'Grains', 
+    unit: 'Cwt', 
+    basePrice: 17.30, 
+    change24h: +3.2, 
+    trend: 'up', 
+    sentiment: 'Strong Buy',
+    history7d: [16.20, 16.45, 16.70, 16.85, 17.00, 17.15, 17.30],
+    advice: 'Strong Local & Regional Demand; Premium Export Grade' 
+  },
+  { 
+    id: 'c-4', 
+    name: 'Soybeans Grade A', 
+    category: 'Oilseeds', 
+    unit: 'Bushel', 
+    basePrice: 12.15, 
+    change24h: +0.4, 
+    trend: 'up', 
+    sentiment: 'Neutral',
+    history7d: [11.95, 12.00, 12.05, 12.10, 12.08, 12.12, 12.15],
+    advice: 'Steady Commercial Purchasing for Biofuel & Livestock Meal' 
+  },
+  { 
+    id: 'c-5', 
+    name: 'High-Grade Cotton', 
+    category: 'Cash Crops', 
+    unit: 'Pound', 
+    basePrice: 0.84, 
+    change24h: -1.2, 
+    trend: 'down', 
+    sentiment: 'Hold',
+    history7d: [0.89, 0.88, 0.86, 0.85, 0.86, 0.85, 0.84],
+    advice: 'Monitor Mill Buying Sentiment; Await Post-Holiday Textile Orders' 
+  },
+  { 
+    id: 'c-6', 
+    name: 'Malting Barley', 
+    category: 'Grains', 
+    unit: 'Bushel', 
+    basePrice: 5.75, 
+    change24h: +2.1, 
+    trend: 'up', 
+    sentiment: 'Bullish',
+    history7d: [5.45, 5.50, 5.58, 5.62, 5.65, 5.70, 5.75],
+    advice: 'Brewery Demand High; Contract Locking Highly Recommended' 
+  }
+];
+
 app.get('/api/market-prices', (req, res) => {
+  const requestedCurrency = (req.query.currency || 'USD').toUpperCase();
+  const currInfo = CURRENCY_RATES[requestedCurrency] || CURRENCY_RATES.USD;
+  const rate = currInfo.rate;
+
+  const commodities = BASE_COMMODITIES.map(c => ({
+    ...c,
+    price: parseFloat((c.basePrice * rate).toFixed(2)),
+    symbol: currInfo.symbol,
+    history7d: c.history7d.map(val => parseFloat((val * rate).toFixed(2)))
+  }));
+
   res.json({
     updatedAt: new Date().toISOString(),
-    currency: 'USD',
-    commodities: [
-      { id: 'c-1', name: 'Hard Red Winter Wheat', unit: 'Bushel', price: 6.42, change24h: +1.8, trend: 'up', advice: 'Hold / Favorable Export Demand' },
-      { id: 'c-2', name: 'Yellow Corn #2', unit: 'Bushel', price: 4.85, change24h: -0.6, trend: 'down', advice: 'Sell Surplus / Good Harvest Yield' },
-      { id: 'c-3', name: 'Basmati Rice (Rough)', unit: 'Cwt', price: 17.30, change24h: +3.2, trend: 'up', advice: 'Strong Local & Regional Demand' },
-      { id: 'c-4', name: 'Soybeans Grade A', unit: 'Bushel', price: 12.15, change24h: +0.4, trend: 'up', advice: 'Steady Commercial Purchasing' },
-      { id: 'c-5', name: 'High-Grade Cotton', unit: 'Pound', price: 0.84, change24h: -1.2, trend: 'down', advice: 'Monitor Mill Buying Sentiment' }
-    ]
+    currency: requestedCurrency,
+    symbol: currInfo.symbol,
+    currenciesAvailable: ['USD', 'EUR', 'INR', 'GBP', 'CAD'],
+    commodities
   });
 });
 
@@ -490,9 +649,33 @@ app.get('/api/market-prices', (req, res) => {
 // 5. Smart Farm Automation Controls Endpoint
 // ==========================================
 let farmControlsState = {
-  dripIrrigation: { status: 'AUTOMATIC', zone1Active: true, zone2Active: true, zone3Active: false, zone4Active: true },
-  droneSprayer: { status: 'STANDBY', battery: 96, payload: 'Neem Organic Solution 85%', lastMission: 'Yesterday 06:00 AM' },
-  greenhouseVentilation: { status: 'ACTIVE', fanSpeed: 'MEDIUM', targetHumidity: 65, humidity: 70 },
+  dripIrrigation: { 
+    status: 'AUTOMATIC', 
+    zone1Active: true, 
+    zone2Active: true, 
+    zone3Active: false, 
+    zone4Active: true,
+    scheduledDurationMin: 45,
+    waterPressureBar: 2.8
+  },
+  droneSprayer: { 
+    status: 'STANDBY', 
+    battery: 96, 
+    payload: 'Neem Organic Solution 85%', 
+    lastMission: 'Yesterday 06:00 AM',
+    flightAltitudeMeters: 3.5,
+    sprayCoverageHa: 12.4
+  },
+  greenhouseVentilation: { 
+    status: 'ACTIVE', 
+    fanSpeed: 'MEDIUM', 
+    targetHumidity: 65, 
+    humidity: 68,
+    targetTemp: 24,
+    currentTemp: 25.5,
+    mistFogger: true,
+    exhaustFan: true
+  },
   soilSensorsMesh: { status: 'HEALTHY', activeNodes: 48, pollingIntervalSec: 15 }
 };
 
@@ -502,6 +685,16 @@ app.get('/api/farm-controls', (req, res) => {
 
 app.post('/api/farm-controls/toggle', (req, res) => {
   const { device, key, value } = req.body;
+  
+  if (device === 'masterIrrigation') {
+    const turnOn = value === true;
+    farmControlsState.dripIrrigation.zone1Active = turnOn;
+    farmControlsState.dripIrrigation.zone2Active = turnOn;
+    farmControlsState.dripIrrigation.zone3Active = turnOn;
+    farmControlsState.dripIrrigation.zone4Active = turnOn;
+    return res.json({ success: true, updatedState: farmControlsState });
+  }
+
   if (farmControlsState[device] && key !== undefined) {
     farmControlsState[device][key] = value;
   }
