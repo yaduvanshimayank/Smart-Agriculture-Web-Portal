@@ -3,11 +3,15 @@ import {
   Droplets, Thermometer, Sun, Wind, Activity, RefreshCw, 
   AlertTriangle, CheckCircle2, Sprout, Compass, BatteryCharging,
   TrendingUp, CloudRain, Zap, FileSpreadsheet, Bot, ChevronRight,
-  Sliders, ShieldAlert, Printer, Search, Play
+  Sliders, ShieldAlert, Printer, Search, Play, Stethoscope, Camera,
+  Clock, X, ExternalLink, Leaf, Eye, FileText, Bug
 } from 'lucide-react';
 import { soundEffects } from '../utils/audio.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { fetchUserDetectionHistory } from '../services/plantDetectionService.js';
 
-export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
+export default function Dashboard({ onConsultAI, onShowToast, isMuted, onNavigateTab }) {
+  const { user } = useAuth();
   const [telemetry, setTelemetry] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedZoneFilter, setSelectedZoneFilter] = useState('all');
@@ -15,8 +19,12 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
   const [timeRange, setTimeRange] = useState('24h');
   const [hoverPoint, setHoverPoint] = useState(null);
   const [irrigatingZoneId, setIrrigatingZoneId] = useState(null);
+  const [recentDetections, setRecentDetections] = useState([]);
+  const [loadingDetections, setLoadingDetections] = useState(true);
+  const [selectedDetectionModal, setSelectedDetectionModal] = useState(null);
   const chartRef = useRef(null);
 
+  // Fetch telemetry mesh data from backend
   const fetchTelemetry = async (range = timeRange) => {
     try {
       setLoading(true);
@@ -31,13 +39,31 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
     }
   };
 
+  // Fetch real plant detection history from Supabase
+  const loadDetections = async () => {
+    if (!user?.id) return;
+    try {
+      setLoadingDetections(true);
+      const data = await fetchUserDetectionHistory(user.id);
+      setRecentDetections(data);
+    } catch (err) {
+      console.warn('Could not load plant detections for dashboard:', err);
+    } finally {
+      setLoadingDetections(false);
+    }
+  };
+
   useEffect(() => {
     fetchTelemetry(timeRange);
     const interval = setInterval(() => fetchTelemetry(timeRange), 12000);
     return () => clearInterval(interval);
   }, [timeRange]);
 
-  // Quick Action to Pulse Irrigate a Zone
+  useEffect(() => {
+    loadDetections();
+  }, [user?.id]);
+
+  // Pulse Irrigate a Zone
   const handleIrrigateZone = async (zone) => {
     try {
       setIrrigatingZoneId(zone.id);
@@ -60,7 +86,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
     }
   };
 
-  // Weather Forecast Data
+  // Weather Forecast Data for Agro-Climatic Zone
   const weatherForecast = [
     { day: 'Today', temp: '24°C / 16°C', rainProb: '10%', condition: 'Sunny', icon: Sun, et0: '4.8 mm/d' },
     { day: 'Tomorrow', temp: '21°C / 14°C', rainProb: '85%', condition: 'Heavy Rain', icon: CloudRain, et0: '1.2 mm/d' },
@@ -110,7 +136,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
     if (onShowToast) onShowToast('CSV Telemetry report generated and downloaded', 'success');
   };
 
-  // Print Telemetry Report
   const handlePrintReport = () => {
     soundEffects.click(isMuted);
     window.print();
@@ -125,15 +150,15 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
     return matchesFilter && matchesSearch;
   });
 
-  const historyData = telemetry?.history || [
-    { time: '00:00', moisture: 42.0, temp: 18.5, humidity: 72 },
-    { time: '04:00', moisture: 41.2, temp: 17.8, humidity: 76 },
-    { time: '08:00', moisture: 48.4, temp: 21.2, humidity: 68 },
-    { time: '12:00', moisture: 44.1, temp: 26.4, humidity: 54 },
-    { time: '16:00', moisture: 39.5, temp: 25.1, humidity: 59 },
-    { time: '20:00', moisture: 46.0, temp: 20.3, humidity: 71 },
-    { time: 'Now', moisture: 46.5, temp: 22.4, humidity: 64.2 }
-  ];
+  // Calculate real metrics from actual data
+  const totalScansCount = recentDetections.length;
+  const criticalDetectionsCount = recentDetections.filter(d => d.severity === 'High' || d.severity === 'Critical').length;
+  const avgMoisture = zones.length > 0 
+    ? (zones.reduce((sum, z) => sum + (parseFloat(z.soilMoisture) || 0), 0) / zones.length).toFixed(1)
+    : '0.0';
+  const attentionZones = zones.filter(z => z.status === 'Attention' || parseFloat(z.soilMoisture) < 30);
+
+  const historyData = telemetry?.history || [];
 
   // SVG Chart Geometry Calculations
   const chartWidth = 720;
@@ -145,17 +170,18 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
   const pointsCount = historyData.length;
 
   const getX = (i) => padLeft + (i / Math.max(1, pointsCount - 1)) * (chartWidth - padLeft - padRight);
-  // Moisture: 20% to 80% scale
   const getYMoisture = (val) => chartHeight - padBottom - ((val - 20) / 60) * (chartHeight - padTop - padBottom);
-  // Temp: 10°C to 35°C scale
   const getYTemp = (val) => chartHeight - padBottom - ((val - 10) / 25) * (chartHeight - padTop - padBottom);
 
-  const moisturePath = historyData.reduce((acc, pt, i) => 
-    `${acc} ${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYMoisture(pt.moisture)}`, '');
-  const moistureAreaPath = `${moisturePath} L ${getX(pointsCount - 1)} ${chartHeight - padBottom} L ${getX(0)} ${chartHeight - padBottom} Z`;
-
-  const tempPath = historyData.reduce((acc, pt, i) => 
-    `${acc} ${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYTemp(pt.temp)}`, '');
+  const moisturePath = historyData.length > 0 
+    ? historyData.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYMoisture(pt.moisture)}`, '')
+    : '';
+  const moistureAreaPath = historyData.length > 0
+    ? `${moisturePath} L ${getX(pointsCount - 1)} ${chartHeight - padBottom} L ${getX(0)} ${chartHeight - padBottom} Z`
+    : '';
+  const tempPath = historyData.length > 0
+    ? historyData.reduce((acc, pt, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${getX(i)} ${getYTemp(pt.temp)}`, '')
+    : '';
 
   return (
     <div>
@@ -164,7 +190,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '1.6rem',
+        marginBottom: '1.4rem',
         flexWrap: 'wrap',
         gap: '1rem'
       }}>
@@ -174,11 +200,11 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               Precision Agriculture IoT Mesh
             </h1>
             <span className="badge badge-emerald">
-              <span className="status-dot"></span> 48 Nodes Live
+              <span className="status-dot"></span> {zones.length > 0 ? `${zones.length * 12} Nodes Active` : 'Mesh Connected'}
             </span>
           </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.86rem', marginTop: '3px' }}>
-            Real-time soil microclimate, NPK chemistry analytics, evapotranspiration rates & automated irrigation
+            Live soil microclimate, NPK chemistry analytics, evapotranspiration rates & automated irrigation.
           </p>
         </div>
 
@@ -198,7 +224,8 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
             onClick={() => {
               soundEffects.click(isMuted);
               fetchTelemetry(timeRange);
-              if (onShowToast) onShowToast('Mesh telemetry synced across all 48 sensor nodes', 'success');
+              loadDetections();
+              if (onShowToast) onShowToast('Dashboard telemetry & Supabase records synced', 'success');
             }} 
             disabled={loading}
           >
@@ -208,7 +235,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         </div>
       </div>
 
-      {/* Indian Agro-Climatic & Seasonal Banner */}
+      {/* Indian Agro-Climatic Banner */}
       <div style={{
         backgroundColor: 'var(--bg-surface)',
         border: '1px solid var(--emerald-border)',
@@ -220,7 +247,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '0.8rem',
-        boxShadow: 'var(--shadow-sm)'
+        boxShadow: 'var(--shadow-card)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{ fontSize: '1.3rem' }}>🇮🇳</span>
@@ -230,7 +257,7 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
               <span className="badge badge-emerald" style={{ fontSize: '0.65rem' }}>PAU / ICAR Monitored</span>
             </div>
             <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-              Sharbati Wheat, Yellow Mustard & Desi Chana in vegetative tiller stage • Western Disturbance Moisture: Favorable
+              Sharbati Wheat, Yellow Mustard & Desi Chana in vegetative tiller stage • Evapotranspiration ET0: Favorable
             </div>
           </div>
         </div>
@@ -244,69 +271,332 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         </div>
       </div>
 
-      {/* 4 Summary Stats Cards Grid with White Main Surfaces & Subordinate Accents */}
+      {/* 4 Summary Stats Cards Grid - Real Data from Supabase & Mesh */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
         gap: '1rem',
         marginBottom: '1.6rem'
       }}>
-        {/* Card 1: Farm Health (Emerald Subordinate) */}
+        {/* Card 1: Real User Plant Scans (from Supabase plant_detections) */}
         <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--emerald-main)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
-            <span style={{ fontWeight: '600' }}>Farm Health Index</span>
-            <Activity size={17} style={{ color: 'var(--emerald-main)' }} />
+            <span style={{ fontWeight: '600' }}>Your Plant Health Scans</span>
+            <Stethoscope size={17} style={{ color: 'var(--emerald-main)' }} />
           </div>
           <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--emerald-main)', letterSpacing: '-0.02em' }}>
-            {telemetry?.overallHealthIndex || 94.8}%
+            {totalScansCount} {totalScansCount === 1 ? 'Scan' : 'Scans'}
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', marginTop: '4px', fontWeight: '600' }}>
-            +2.4% vs last week (Optimal Soil Conditions)
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            {totalScansCount > 0 ? 'Verified in Supabase Database' : 'No scans yet — Upload photo'}
           </div>
         </div>
 
-        {/* Card 2: Water Conservation (Sky Blue Subordinate) */}
+        {/* Card 2: Pathology Health Status (Real count of high/critical alerts) */}
         <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--blue-main)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
-            <span style={{ fontWeight: '600' }}>Water Conserved</span>
-            <Droplets size={17} style={{ color: 'var(--blue-main)' }} />
+            <span style={{ fontWeight: '600' }}>Pathology Alerts</span>
+            <Bug size={17} style={{ color: 'var(--blue-main)' }} />
           </div>
-          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--blue-main)', letterSpacing: '-0.02em' }}>
-            18,400 L
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: criticalDetectionsCount > 0 ? 'var(--rose-alert)' : 'var(--blue-main)', letterSpacing: '-0.02em' }}>
+            {criticalDetectionsCount} {criticalDetectionsCount === 1 ? 'Action Rx' : 'Action Rx'}
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--blue-main)', marginTop: '4px', fontWeight: '600' }}>
-            ⚡ 28% water saved via precision drip cycles
+          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+            {criticalDetectionsCount > 0 ? 'Severe pathogen requiring treatment' : 'No critical crop pathogens detected'}
           </div>
         </div>
 
-        {/* Card 3: Yield Projection (Harvest Amber Subordinate) */}
+        {/* Card 3: Real Soil Moisture Average (from IoT Mesh Zones) */}
         <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--amber-warning)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
-            <span style={{ fontWeight: '600' }}>Harvest Yield Projection</span>
-            <TrendingUp size={17} style={{ color: 'var(--amber-warning)' }} />
+            <span style={{ fontWeight: '600' }}>Average Soil Moisture</span>
+            <Droplets size={17} style={{ color: 'var(--amber-warning)' }} />
           </div>
           <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--amber-warning)', letterSpacing: '-0.02em' }}>
-            42.5 Tons
+            {avgMoisture}%
           </div>
           <div style={{ fontSize: '0.74rem', color: 'var(--amber-warning)', marginTop: '4px', fontWeight: '600' }}>
-            +14% projected yield gain vs baseline
+            {parseFloat(avgMoisture) > 40 ? 'Optimal root hydration balance' : 'Moderate hydration level'}
           </div>
         </div>
 
-        {/* Card 4: Active Alerts (Rose Alert Subordinate) */}
+        {/* Card 4: Active Zone Attention (Calculated from real zones) */}
         <div className="glass-panel" style={{ padding: '1.3rem', borderTop: '3px solid var(--rose-alert)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '0.4rem' }}>
-            <span style={{ fontWeight: '600' }}>Active Field Alerts</span>
+            <span style={{ fontWeight: '600' }}>Zone Moisture Alerts</span>
             <AlertTriangle size={17} style={{ color: 'var(--rose-alert)' }} />
           </div>
-          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: 'var(--rose-alert)', letterSpacing: '-0.02em' }}>
-            1 Attention
+          <div style={{ fontSize: '1.9rem', fontWeight: '800', color: attentionZones.length > 0 ? 'var(--rose-alert)' : 'var(--emerald-main)', letterSpacing: '-0.02em' }}>
+            {attentionZones.length} {attentionZones.length === 1 ? 'Zone' : 'Zones'}
           </div>
-          <div style={{ fontSize: '0.74rem', color: 'var(--rose-alert)', marginTop: '4px', fontWeight: '600' }}>
-            Zone 3 (Orchard): Moisture at 27% (Below 30%)
+          <div style={{ fontSize: '0.74rem', color: attentionZones.length > 0 ? 'var(--rose-alert)' : 'var(--emerald-main)', marginTop: '4px', fontWeight: '600' }}>
+            {attentionZones.length > 0 
+              ? `${attentionZones[0].name} requires irrigation`
+              : 'All operational zones in optimal moisture range'}
           </div>
         </div>
       </div>
+
+      {/* ==================================================================== */}
+      {/* Real Plant Pathology History Section (Connected to Supabase) */}
+      {/* ==================================================================== */}
+      <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '1.8rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.1rem', flexWrap: 'wrap', gap: '8px' }}>
+          <div>
+            <h3 style={{ fontSize: '1.12rem', fontWeight: '800', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Stethoscope size={18} style={{ color: 'var(--emerald-main)' }} />
+              Recent Plant Pathology Scans & Lab History
+            </h3>
+            <p style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Specimens stored in private Supabase Storage and records protected with Row Level Security (RLS).
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {onNavigateTab && (
+              <button
+                className="btn-emerald"
+                style={{ fontSize: '0.78rem', padding: '0.45rem 0.9rem' }}
+                onClick={() => onNavigateTab('crop-doctor')}
+              >
+                <Camera size={14} />
+                <span>New Plant Scan</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {loadingDetections ? (
+          <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+            <RefreshCw size={24} className="auth-spinner" style={{ color: 'var(--emerald-main)', margin: '0 auto 0.6rem' }} />
+            <p style={{ fontSize: '0.84rem' }}>Syncing detection records from Supabase...</p>
+          </div>
+        ) : recentDetections.length === 0 ? (
+          /* Meaningful Empty State */
+          <div style={{
+            textAlign: 'center',
+            padding: '2.5rem 1.5rem',
+            border: '2px dashed var(--border-subtle)',
+            borderRadius: '14px',
+            backgroundColor: 'var(--bg-subtle)'
+          }}>
+            <Leaf size={36} style={{ color: 'var(--emerald-main)', opacity: 0.5, marginBottom: '0.6rem' }} />
+            <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+              No disease detection history yet. Upload a plant image to get started.
+            </h4>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', maxWidth: '380px', margin: '0 auto 1.25rem' }}>
+              Upload crop leaf photographs to detect plant pathogens, track health trends, and store diagnostic reports.
+            </p>
+            {onNavigateTab && (
+              <button
+                className="btn-emerald"
+                style={{ padding: '0.55rem 1.2rem', fontSize: '0.82rem' }}
+                onClick={() => onNavigateTab('crop-doctor')}
+              >
+                <Camera size={14} />
+                <span>Open Crop Doctor Lab</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          /* Real Detections List */
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: '1rem'
+          }}>
+            {recentDetections.slice(0, 6).map((item) => (
+              <div
+                key={item.id}
+                onClick={() => setSelectedDetectionModal(item)}
+                className="glass-panel-interactive"
+                style={{
+                  padding: '1rem',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-subtle)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={11} />
+                      {new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                    </span>
+                    <span className={`badge ${item.severity === 'High' || item.severity === 'Critical' ? 'badge-alert' : 'badge-emerald'}`} style={{ fontSize: '0.64rem' }}>
+                      {item.severity || 'Moderate'}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '0.6rem' }}>
+                    <div style={{
+                      width: '54px',
+                      height: '54px',
+                      borderRadius: '8px',
+                      backgroundColor: '#0f172a',
+                      overflow: 'hidden',
+                      flexShrink: 0,
+                      border: '1px solid var(--border-subtle)'
+                    }}>
+                      {item.signedUrl ? (
+                        <img
+                          src={item.signedUrl}
+                          alt={item.original_filename}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                          <Leaf size={20} />
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{ overflow: 'hidden' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--emerald-main)', fontWeight: '700' }}>
+                        {item.crop_type || 'Crop Leaf'}
+                      </span>
+                      <h4 style={{
+                        fontSize: '0.9rem',
+                        fontWeight: '800',
+                        color: 'var(--text-main)',
+                        margin: '2px 0',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {item.detected_disease || 'Diagnosis In Progress'}
+                      </h4>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        Conf: <strong>{item.confidence ? `${item.confidence}%` : 'N/A'}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  paddingTop: '0.5rem',
+                  borderTop: '1px solid var(--border-subtle)',
+                  fontSize: '0.74rem',
+                  color: 'var(--emerald-main)',
+                  fontWeight: '700'
+                }}>
+                  <span>View Details</span>
+                  <ChevronRight size={13} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Selected Detection Detail Modal */}
+      {selectedDetectionModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(5, 15, 10, 0.78)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div className="modal-content" style={{
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-emerald)',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '540px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '1.75rem',
+            boxShadow: 'var(--shadow-elevated)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '0.85rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '1rem' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <FileText size={18} style={{ color: 'var(--emerald-main)' }} />
+                Pathology Scan Report
+              </h3>
+              <button
+                onClick={() => setSelectedDetectionModal(null)}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '4px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {selectedDetectionModal.signedUrl && (
+              <div style={{ height: '220px', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#0f172a', marginBottom: '1.1rem', border: '1px solid var(--border-subtle)' }}>
+                <img
+                  src={selectedDetectionModal.signedUrl}
+                  alt={selectedDetectionModal.original_filename}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                />
+              </div>
+            )}
+
+            <div style={{
+              padding: '0.9rem',
+              backgroundColor: 'var(--emerald-bg)',
+              borderRadius: '10px',
+              border: '1px solid var(--emerald-border)',
+              marginBottom: '1rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
+                  {selectedDetectionModal.confidence ? `${selectedDetectionModal.confidence}% Confidence` : 'Verified'}
+                </span>
+                <span className={`badge ${selectedDetectionModal.severity === 'High' ? 'badge-alert' : 'badge-warning'}`} style={{ fontSize: '0.68rem' }}>
+                  Severity: {selectedDetectionModal.severity || 'Moderate'}
+                </span>
+              </div>
+              <h4 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-main)', margin: '4px 0' }}>
+                {selectedDetectionModal.detected_disease}
+              </h4>
+              <div style={{ fontSize: '0.74rem', color: 'var(--text-secondary)' }}>
+                Crop: <strong>{selectedDetectionModal.crop_type}</strong> • Scanned on: {new Date(selectedDetectionModal.created_at).toLocaleString()}
+              </div>
+            </div>
+
+            {selectedDetectionModal.details?.organicRemedy && (
+              <div style={{ marginBottom: '0.85rem', padding: '0.85rem', backgroundColor: 'var(--bg-subtle)', borderRadius: '10px', borderLeft: '3px solid var(--emerald-main)' }}>
+                <h5 style={{ fontSize: '0.82rem', color: 'var(--emerald-main)', fontWeight: '700', marginBottom: '4px' }}>
+                  Eco-Friendly Organic Treatment:
+                </h5>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                  {selectedDetectionModal.details.organicRemedy}
+                </p>
+              </div>
+            )}
+
+            {selectedDetectionModal.details?.chemicalTreatment && (
+              <div style={{ marginBottom: '1rem', padding: '0.85rem', backgroundColor: 'var(--bg-subtle)', borderRadius: '10px', borderLeft: '3px solid var(--blue-main)' }}>
+                <h5 style={{ fontSize: '0.82rem', color: 'var(--blue-main)', fontWeight: '700', marginBottom: '4px' }}>
+                  Chemical Remedy:
+                </h5>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-main)', lineHeight: '1.5' }}>
+                  {selectedDetectionModal.details.chemicalTreatment}
+                </p>
+              </div>
+            )}
+
+            <button
+              className="btn-emerald"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => setSelectedDetectionModal(null)}
+            >
+              Close Specimen Report
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main Grid: Interactive Charts & Microclimate Weather */}
       <div style={{
@@ -361,7 +651,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
             style={{ height: '180px', position: 'relative' }}
             onMouseLeave={() => setHoverPoint(null)}
           >
-            {/* Dynamic Interactive Floating Tooltip */}
             {hoverPoint && (
               <div 
                 className="chart-tooltip" 
@@ -387,7 +676,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 </linearGradient>
               </defs>
 
-              {/* Y-Axis Gridlines & Scale Labels */}
               {[
                 { val: '60%', y: getYMoisture(60) },
                 { val: '40%', y: getYMoisture(40) },
@@ -402,155 +690,127 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                   />
                   <text 
                     x={padLeft - 6} y={grid.y + 3} 
+                    fontSize="10" 
                     fill="var(--text-dim)" 
-                    fontSize="9" 
                     textAnchor="end"
-                    fontFamily="monospace"
                   >
                     {grid.val}
                   </text>
                 </g>
               ))}
 
-              {/* Area Fill */}
-              <path d={moistureAreaPath} fill="url(#moistureGrad)" />
+              {moistureAreaPath && (
+                <path d={moistureAreaPath} fill="url(#moistureGrad)" />
+              )}
+              {moisturePath && (
+                <path d={moisturePath} fill="none" stroke="#0284c7" strokeWidth="2.5" />
+              )}
+              {tempPath && (
+                <path d={tempPath} fill="none" stroke="#059669" strokeWidth="2" strokeDasharray="3 3" />
+              )}
 
-              {/* Moisture Line */}
-              <path d={moisturePath} fill="none" stroke="#0284c7" strokeWidth="2.5" />
+              {historyData.map((pt, i) => (
+                <circle
+                  key={i}
+                  cx={getX(i)}
+                  cy={getYMoisture(pt.moisture)}
+                  r={hoverPoint?.index === i ? 6 : 3.5}
+                  fill="#ffffff"
+                  stroke="#0284c7"
+                  strokeWidth="2.5"
+                  style={{ cursor: 'pointer', transition: 'all 0.15s ease' }}
+                  onMouseEnter={(e) => {
+                    const rect = chartRef.current.getBoundingClientRect();
+                    setHoverPoint({
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top - 70,
+                      data: pt,
+                      index: i
+                    });
+                  }}
+                />
+              ))}
 
-              {/* Temperature Line */}
-              <path d={tempPath} fill="none" stroke="#059669" strokeWidth="2" strokeDasharray="3 3" />
-
-              {/* Points & Hover Hit Areas */}
-              {historyData.map((pt, i) => {
-                const cx = getX(i);
-                const cyM = getYMoisture(pt.moisture);
-                const isHovered = hoverPoint?.index === i;
-                return (
-                  <g key={i}>
-                    {/* Hover Target Circle */}
-                    <circle
-                      cx={cx}
-                      cy={cyM}
-                      r="16"
-                      fill="transparent"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={(e) => {
-                        const rect = chartRef.current?.getBoundingClientRect();
-                        const clientX = e.clientX - (rect?.left || 0);
-                        const clientY = cyM;
-                        setHoverPoint({ index: i, data: pt, x: clientX, y: clientY });
-                      }}
-                    />
-                    
-                    {/* Visual Dot */}
-                    <circle
-                      cx={cx}
-                      cy={cyM}
-                      r={isHovered ? 6 : 4}
-                      fill="#0284c7"
-                      stroke="#ffffff"
-                      strokeWidth={isHovered ? 2 : 1.5}
-                      style={{ pointerEvents: 'none', transition: 'r 0.15s ease' }}
-                    />
-
-                    {/* Temp Dot */}
-                    <circle
-                      cx={cx}
-                      cy={getYTemp(pt.temp)}
-                      r={isHovered ? 5 : 3}
-                      fill="#059669"
-                      stroke="#ffffff"
-                      strokeWidth="1"
-                      style={{ pointerEvents: 'none', transition: 'r 0.15s ease' }}
-                    />
-
-                    {/* Time Label on X-Axis */}
-                    <text
-                      x={cx}
-                      y={chartHeight - 4}
-                      fill="var(--text-muted)"
-                      fontSize="9.5"
-                      textAnchor="middle"
-                      fontFamily="monospace"
-                    >
-                      {pt.time}
-                    </text>
-                  </g>
-                );
-              })}
+              {historyData.map((pt, i) => (
+                <text
+                  key={i}
+                  x={getX(i)}
+                  y={chartHeight - 6}
+                  fontSize="10"
+                  fill="var(--text-muted)"
+                  textAnchor="middle"
+                >
+                  {pt.time}
+                </text>
+              ))}
             </svg>
           </div>
 
-          {/* Chart Legend */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '0.6rem', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '20px',
+            marginTop: '0.8rem',
+            fontSize: '0.76rem',
+            color: 'var(--text-muted)'
+          }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '3px', backgroundColor: '#0284c7', borderRadius: '2px' }}></span>
-              <span>Soil Moisture (%)</span>
+              <span style={{ width: '12px', height: '3px', backgroundColor: 'var(--blue-main)', display: 'inline-block' }}></span>
+              Soil Moisture % (Drip Managed)
             </span>
             <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ width: '12px', height: '3px', backgroundColor: '#059669', borderRadius: '2px', borderStyle: 'dashed' }}></span>
-              <span>Soil Temp (°C)</span>
+              <span style={{ width: '12px', height: '2px', backgroundColor: 'var(--emerald-main)', borderTop: '1px dashed var(--emerald-main)', display: 'inline-block' }}></span>
+              Root Temperature °C
             </span>
           </div>
         </div>
 
-        {/* 5-Day Microclimate Weather Advisory */}
-        <div className="glass-panel" style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.7rem' }}>
-              <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
-                <Sun size={17} style={{ color: 'var(--amber-warning)' }} /> Weather & Evapotranspiration ($ET_0$)
-              </h3>
-              <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
-                Automated Advisory
-              </span>
-            </div>
-
-            {/* Smart Rain Advisory Banner */}
-            <div style={{
-              backgroundColor: 'var(--blue-bg)',
-              border: '1px solid var(--blue-border)',
-              borderRadius: '10px',
-              padding: '0.75rem 0.9rem',
-              marginBottom: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px'
-            }}>
-              <CloudRain size={22} style={{ color: 'var(--blue-main)', flexShrink: 0 }} />
-              <div style={{ fontSize: '0.78rem' }}>
-                <strong style={{ color: 'var(--blue-dark)', display: 'block' }}>Rain Expected Tomorrow (85% Probability)</strong>
-                <span style={{ color: 'var(--text-muted)' }}>
-                  Smart drip irrigation automatically queued for 24h delay to conserve ~1,400 Liters.
-                </span>
-              </div>
-            </div>
-
-            {/* 5-Day Forecast Grid */}
-            <div className="weather-grid">
-              {weatherForecast.map((w, idx) => {
-                const IconComponent = w.icon;
-                return (
-                  <div key={idx} className="weather-card">
-                    <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>{w.day}</span>
-                    <IconComponent size={18} style={{ color: w.rainProb !== '0%' ? 'var(--blue-main)' : 'var(--amber-warning)', margin: '4px auto' }} />
-                    <span style={{ fontSize: '0.74rem', fontWeight: '700', display: 'block', color: 'var(--text-main)' }}>{w.temp.split('/')[0]}</span>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--blue-main)', display: 'block', fontWeight: '600' }}>☔ {w.rainProb}</span>
-                  </div>
-                );
-              })}
-            </div>
+        {/* 5-Day Weather & Evapotranspiration Panel */}
+        <div className="glass-panel" style={{ padding: '1.4rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ fontSize: '1.05rem', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
+              <Sun size={17} style={{ color: 'var(--amber-warning)' }} /> Regional Microclimate & ET₀
+            </h3>
+            <span className="badge badge-indigo" style={{ fontSize: '0.68rem' }}>
+              Precision Drip Sync
+            </span>
           </div>
 
-          <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.9rem', display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-subtle)', paddingTop: '0.6rem' }}>
-            <span>Average Evapotranspiration: <strong style={{ color: 'var(--emerald-main)' }}>3.8 mm/day</strong></span>
-            <span>Solar Radiation Index: <strong style={{ color: 'var(--amber-warning)' }}>High (UV 7.2)</strong></span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {weatherForecast.map((wf, idx) => {
+              const Icon = wf.icon;
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: '8px',
+                    backgroundColor: idx === 0 ? 'var(--emerald-bg)' : 'var(--bg-subtle)',
+                    border: idx === 0 ? '1px solid var(--emerald-border)' : '1px solid var(--border-subtle)',
+                    fontSize: '0.8rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <Icon size={17} style={{ color: idx === 0 ? 'var(--emerald-main)' : 'var(--blue-main)' }} />
+                    <strong style={{ color: 'var(--text-main)', width: '65px' }}>{wf.day}</strong>
+                    <span style={{ color: 'var(--text-secondary)' }}>{wf.condition}</span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{ color: 'var(--blue-main)', fontWeight: '600' }}>💧 {wf.rainProb}</span>
+                    <span style={{ color: 'var(--text-main)', fontWeight: '700' }}>{wf.temp}</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Field Zones Section Header & Interactive Filter Bar */}
+      {/* Sensor Zone Filter & Search Controls */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -559,144 +819,112 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
         flexWrap: 'wrap',
         gap: '0.8rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-main)' }}>
-            <Sprout style={{ color: 'var(--emerald-main)' }} size={20} /> Field Zones & Root-Zone Soil Chemistry
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-main)' }}>
+            Operational Crop Zones ({filteredZones.length})
           </h2>
-          <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
-            {filteredZones.length} of {zones.length} Zones
-          </span>
         </div>
 
-        {/* Search & Filter Controls */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-          {/* Quick Search */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative' }}>
-            <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input 
+            <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--text-dim)' }} />
+            <input
               type="text"
-              placeholder="Search crop or zone..."
+              placeholder="Search zones or crops..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="auth-input"
               style={{
-                padding: '0.45rem 0.8rem 0.45rem 2rem',
-                fontSize: '0.78rem',
-                backgroundColor: 'var(--bg-surface)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '8px',
-                color: 'var(--text-main)',
-                outline: 'none',
-                width: '160px'
+                paddingLeft: '32px',
+                paddingTop: '0.45rem',
+                paddingBottom: '0.45rem',
+                fontSize: '0.8rem',
+                width: '180px'
               }}
             />
           </div>
 
-          {/* Filter Tabs */}
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            <button 
-              className={`zone-filter-tab ${selectedZoneFilter === 'all' ? 'active' : ''}`}
-              onClick={() => {
-                soundEffects.click(isMuted);
-                setSelectedZoneFilter('all');
-              }}
-            >
-              All Zones
-            </button>
+          <select
+            value={selectedZoneFilter}
+            onChange={(e) => setSelectedZoneFilter(e.target.value)}
+            className="auth-input"
+            style={{
+              paddingTop: '0.45rem',
+              paddingBottom: '0.45rem',
+              fontSize: '0.8rem',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">All Farm Sectors</option>
             {zones.map(z => (
-              <button
-                key={z.id}
-                className={`zone-filter-tab ${selectedZoneFilter === z.id.toString() ? 'active' : ''}`}
-                onClick={() => {
-                  soundEffects.click(isMuted);
-                  setSelectedZoneFilter(z.id.toString());
-                }}
-              >
-                {z.name.split('-')[0]}
-              </button>
+              <option key={z.id} value={z.id.toString()}>{z.name}</option>
             ))}
-          </div>
+          </select>
         </div>
       </div>
 
-      {/* Field Zones Cards Grid (White Main Surface with Subordinate Accent Highlights) */}
+      {/* Sensor Zone Cards Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(310px, 1fr))',
         gap: '1.2rem'
       }}>
         {filteredZones.map((zone) => {
-          const isWarning = zone.status !== 'Optimal';
           const isIrrigating = irrigatingZoneId === zone.id;
-
           return (
             <div 
               key={zone.id} 
               className="glass-panel" 
               style={{ 
-                padding: '1.4rem',
-                borderLeft: isWarning ? '4px solid var(--amber-warning)' : '4px solid var(--emerald-main)',
+                padding: '1.3rem',
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'space-between'
               }}
             >
               <div>
-                {/* Zone Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.9rem' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: '0.8rem'
+                }}>
                   <div>
-                    <h3 style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)' }}>{zone.name}</h3>
-                    {zone.soilType && (
-                      <div style={{ fontSize: '0.74rem', color: 'var(--emerald-main)', fontWeight: '600', marginTop: '2px' }}>
-                        🌾 {zone.soilType}
-                      </div>
-                    )}
-                    <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Crop: <strong style={{ color: 'var(--text-main)' }}>{zone.crop}</strong> • {zone.area}
+                    <h3 style={{ fontSize: '1.02rem', fontWeight: '700', color: 'var(--text-main)' }}>
+                      {zone.name}
+                    </h3>
+                    <div style={{ fontSize: '0.78rem', color: 'var(--emerald-main)', fontWeight: '600', marginTop: '2px' }}>
+                      {zone.crop} • {zone.area}
                     </div>
                   </div>
-                  <span className={`badge ${isWarning ? 'badge-warning' : 'badge-emerald'}`}>
-                    {isWarning ? <AlertTriangle size={12} /> : <CheckCircle2 size={12} />}
+
+                  <span className={`badge ${zone.status === 'Optimal' ? 'badge-emerald' : 'badge-alert'}`}>
+                    {zone.status === 'Optimal' ? <CheckCircle2 size={11} /> : <AlertTriangle size={11} />}
                     {zone.status}
                   </span>
                 </div>
 
-                {/* Progress Bar for Moisture */}
-                <div style={{ marginBottom: '1.1rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', marginBottom: '0.35rem' }}>
-                    <span style={{ color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Droplets size={13} style={{ color: 'var(--blue-main)' }} /> Soil Moisture Content
-                    </span>
-                    <span style={{ fontWeight: '700', color: zone.soilMoisture < 30 ? 'var(--amber-warning)' : 'var(--blue-main)' }}>
-                      {zone.soilMoisture}%
-                    </span>
-                  </div>
-                  <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--bg-subtle)', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-subtle)' }}>
-                    <div style={{
-                      width: `${Math.min(100, zone.soilMoisture)}%`,
-                      height: '100%',
-                      background: zone.soilMoisture < 30 
-                        ? 'linear-gradient(90deg, var(--amber-light), var(--rose-light))'
-                        : 'linear-gradient(90deg, var(--blue-main), var(--emerald-main))',
-                      borderRadius: '4px',
-                      transition: 'width 0.5s ease'
-                    }}></div>
-                  </div>
-                </div>
-
-                {/* Key Metrics Grid (Crisp Sub-surface) */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
-                  gap: '0.7rem',
+                  gap: '0.75rem',
                   backgroundColor: 'var(--bg-subtle)',
-                  padding: '0.9rem',
+                  padding: '0.85rem',
                   borderRadius: '10px',
-                  marginBottom: '1rem',
-                  border: '1px solid var(--border-subtle)'
+                  marginBottom: '1rem'
                 }}>
                   <div>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Thermometer size={11} style={{ color: 'var(--rose-alert)' }} /> Soil Temp
+                      <Droplets size={11} style={{ color: 'var(--blue-main)' }} /> Soil Moisture
+                    </div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: '800', color: parseFloat(zone.soilMoisture) < 30 ? 'var(--rose-alert)' : 'var(--blue-main)', marginTop: '2px' }}>
+                      {zone.soilMoisture} %
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Thermometer size={11} style={{ color: 'var(--emerald-main)' }} /> Soil Temp
                     </div>
                     <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
                       {zone.soilTemp} °C
@@ -720,45 +948,32 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                       {zone.ph} pH
                     </div>
                   </div>
-
-                  <div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Sun size={11} style={{ color: 'var(--amber-warning)' }} /> Sunlight Lux
-                    </div>
-                    <div style={{ fontSize: '1.05rem', fontWeight: '700', color: 'var(--text-main)', marginTop: '2px' }}>
-                      {(zone.sunlightLux / 1000).toFixed(1)} kLx
-                    </div>
-                  </div>
                 </div>
 
-                {/* Visual NPK Target Chemistry Bars */}
                 <div style={{ fontSize: '0.78rem', marginBottom: '1.1rem' }}>
                   <span style={{ color: 'var(--text-secondary)', display: 'block', marginBottom: '0.5rem', fontWeight: '600' }}>
-                    NPK Nutrient Ratios vs Crop Target (mg/kg)
+                    NPK Nutrient Ratios (mg/kg)
                   </span>
 
                   <div className="npk-bar-container">
-                    {/* Nitrogen (Emerald) */}
                     <div className="npk-bar-item">
-                      <span className="npk-label">Nitrogen (N)</span>
+                      <span className="npk-label">N</span>
                       <div className="npk-track">
                         <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.n / 180) * 100)}%`, backgroundColor: 'var(--emerald-main)' }}></div>
                       </div>
                       <span className="npk-value" style={{ color: 'var(--emerald-main)' }}>{zone.npk.n}</span>
                     </div>
 
-                    {/* Phosphorus (Blue) */}
                     <div className="npk-bar-item">
-                      <span className="npk-label">Phosphorus (P)</span>
+                      <span className="npk-label">P</span>
                       <div className="npk-track">
                         <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.p / 90) * 100)}%`, backgroundColor: 'var(--blue-main)' }}></div>
                       </div>
                       <span className="npk-value" style={{ color: 'var(--blue-main)' }}>{zone.npk.p}</span>
                     </div>
 
-                    {/* Potassium (Amber) */}
                     <div className="npk-bar-item">
-                      <span className="npk-label">Potassium (K)</span>
+                      <span className="npk-label">K</span>
                       <div className="npk-track">
                         <div className="npk-fill" style={{ width: `${Math.min(100, (zone.npk.k / 220) * 100)}%`, backgroundColor: 'var(--amber-warning)' }}></div>
                       </div>
@@ -768,7 +983,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 </div>
               </div>
 
-              {/* Action Footer */}
               <div style={{
                 paddingTop: '0.85rem',
                 borderTop: '1px solid var(--border-subtle)',
@@ -777,7 +991,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                 gap: '8px'
               }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  {/* Pulse Irrigate Action */}
                   <button
                     className="btn-outline"
                     style={{ flex: 1, fontSize: '0.78rem', padding: '0.45rem' }}
@@ -788,7 +1001,6 @@ export default function Dashboard({ onConsultAI, onShowToast, isMuted }) {
                     <span>{isIrrigating ? 'Pulsing...' : 'Quick Irrigate'}</span>
                   </button>
 
-                  {/* Consult AI Button */}
                   <button
                     className="btn-emerald"
                     style={{ flex: 1.3, fontSize: '0.78rem', padding: '0.45rem' }}

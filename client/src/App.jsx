@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Bot, Stethoscope, Sliders, TrendingUp, 
   Sprout, Activity, Zap, ShieldCheck, Volume2, VolumeX,
   Clock, MapPin, CheckCircle2, AlertTriangle, Info, Bell,
-  Sun, Moon
+  Sun, Moon, LogOut, User, Settings, Database
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard.jsx';
@@ -11,16 +12,41 @@ import AgriGroqChat from './components/AgriGroqChat.jsx';
 import CropDoctor from './components/CropDoctor.jsx';
 import FarmControls from './components/FarmControls.jsx';
 import MarketPrices from './components/MarketPrices.jsx';
+import UserProfileModal from './components/UserProfileModal.jsx';
+import SupabaseConfigModal from './components/SupabaseConfigModal.jsx';
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
+
+import Login from './pages/Login.jsx';
+import Register from './pages/Register.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+
+import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { soundEffects } from './utils/audio.js';
 
-export default function App() {
+/**
+ * Main Authenticated Precision Agriculture Portal
+ */
+function PortalDashboard({ onOpenConfigModal }) {
+  const { user, profile, signOut, isConfigured } = useAuth();
+  const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('dashboard');
   const [initialPrompt, setInitialPrompt] = useState('');
   const [theme, setTheme] = useState(() => localStorage.getItem('agri_theme') || 'light');
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-  const [selectedFarm, setSelectedFarm] = useState('Punjab Agro-Hub — Ludhiana (Alluvial Basin)');
+  const [selectedFarm, setSelectedFarm] = useState(profile?.farm_name || 'Punjab Agro-Hub — Ludhiana (Alluvial Basin)');
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('agri_muted') === 'true');
   const [toasts, setToasts] = useState([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Sync farm name if profile updates
+  useEffect(() => {
+    if (profile?.farm_name) {
+      setSelectedFarm(profile.farm_name);
+    }
+  }, [profile?.farm_name]);
 
   // Apply theme to document root
   useEffect(() => {
@@ -55,7 +81,7 @@ export default function App() {
   // Keyboard shortcut listener (1-5 to switch tabs)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
       if (e.key === '1') switchTab('dashboard');
       if (e.key === '2') switchTab('chat');
       if (e.key === '3') switchTab('crop-doctor');
@@ -86,6 +112,17 @@ export default function App() {
     showToast('Agronomy telemetry query routed to AgriGroq AI', 'info');
   };
 
+  const handleLogout = async () => {
+    soundEffects.click(isMuted);
+    try {
+      await signOut();
+      showToast('Session securely terminated', 'info');
+      navigate('/login', { replace: true });
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
+
   const navItems = [
     { id: 'dashboard', label: 'IoT Telemetry Mesh', icon: LayoutDashboard, shortcut: '1' },
     { id: 'chat', label: 'AI Farm Advisor', icon: Bot, badge: 'Groq Live', shortcut: '2' },
@@ -93,6 +130,9 @@ export default function App() {
     { id: 'controls', label: 'Farm Controls & Valves', icon: Sliders, shortcut: '4' },
     { id: 'market', label: 'Commodity Prices', icon: TrendingUp, shortcut: '5' }
   ];
+
+  const displayName = profile?.full_name || user?.user_metadata?.full_name || (user?.email ? user.email.split('@')[0] : 'Farm Manager');
+  const userInitials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() || 'FM';
 
   return (
     <div className="app-container" data-theme={theme}>
@@ -109,6 +149,13 @@ export default function App() {
         ))}
       </div>
 
+      {/* User Profile Modal */}
+      <UserProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        onShowToast={showToast}
+      />
+
       {/* Desktop Left Sidebar Navigation */}
       <aside className="sidebar">
         <div>
@@ -118,7 +165,7 @@ export default function App() {
             alignItems: 'center',
             gap: '12px',
             paddingBottom: '1.2rem',
-            marginBottom: '1.2rem',
+            marginBottom: '1rem',
             borderBottom: '1px solid var(--border-subtle)'
           }}>
             <div style={{
@@ -144,6 +191,73 @@ export default function App() {
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'block', fontWeight: '500' }}>
                 Precision Agriculture Portal
               </span>
+            </div>
+          </div>
+
+          {/* Authenticated User Profile Card */}
+          <div className="sidebar-user-card">
+            <div 
+              onClick={() => setShowProfileModal(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', flex: 1, minWidth: 0 }}
+              title="Click to view & edit profile"
+            >
+              <div className="user-avatar-circle">
+                {userInitials}
+              </div>
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ 
+                  fontSize: '0.84rem', 
+                  fontWeight: '700', 
+                  color: 'var(--text-main)', 
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis' 
+                }}>
+                  {displayName}
+                </div>
+                <div style={{ 
+                  fontSize: '0.7rem', 
+                  color: 'var(--emerald-main)', 
+                  fontWeight: '600',
+                  whiteSpace: 'nowrap', 
+                  overflow: 'hidden', 
+                  textOverflow: 'ellipsis' 
+                }}>
+                  {profile?.role || 'Agricultural Lead'}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <button
+                onClick={() => setShowProfileModal(true)}
+                title="Profile Settings"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px'
+                }}
+              >
+                <Settings size={15} />
+              </button>
+              <button
+                onClick={handleLogout}
+                title="Sign Out"
+                id="sidebar-logout-btn"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--rose-alert)',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  borderRadius: '6px'
+                }}
+              >
+                <LogOut size={15} />
+              </button>
             </div>
           </div>
 
@@ -238,6 +352,42 @@ export default function App() {
           fontSize: '0.76rem',
           color: 'var(--text-muted)'
         }}>
+          {/* Supabase Connection Status Pill */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.6rem',
+            padding: '4px 6px',
+            borderRadius: '6px',
+            backgroundColor: 'var(--bg-subtle)',
+            border: '1px solid var(--border-subtle)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Database size={13} style={{ color: isConfigured ? 'var(--emerald-main)' : 'var(--amber-warning)' }} />
+              <span style={{ fontSize: '0.7rem', fontWeight: '600', color: isConfigured ? 'var(--emerald-main)' : 'var(--amber-warning)' }}>
+                {isConfigured ? 'Supabase DB Live' : 'Demo Mode DB'}
+              </span>
+            </div>
+            {onOpenConfigModal && (
+              <button
+                onClick={onOpenConfigModal}
+                title="Supabase Settings"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+              >
+                <Settings size={12} />
+              </button>
+            )}
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span className="status-dot"></span>
@@ -306,6 +456,43 @@ export default function App() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* User Chip on Mobile */}
+            <button
+              onClick={() => setShowProfileModal(true)}
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                background: 'var(--emerald-bg)',
+                color: 'var(--emerald-main)',
+                border: '1px solid var(--emerald-border)',
+                fontWeight: '700',
+                fontSize: '0.72rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Profile"
+            >
+              {userInitials}
+            </button>
+
+            <button
+              onClick={handleLogout}
+              style={{
+                background: 'var(--bg-subtle)',
+                border: '1px solid var(--border-subtle)',
+                color: 'var(--rose-alert)',
+                cursor: 'pointer',
+                padding: '5px 8px',
+                borderRadius: '8px'
+              }}
+              title="Sign Out"
+            >
+              <LogOut size={13} />
+            </button>
+
             <button
               onClick={toggleTheme}
               style={{
@@ -332,9 +519,6 @@ export default function App() {
             >
               {isMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
             </button>
-            <span className="badge badge-emerald" style={{ fontSize: '0.68rem' }}>
-              <span className="status-dot"></span> Live
-            </span>
           </div>
         </div>
 
@@ -413,6 +597,7 @@ export default function App() {
               onConsultAI={handleConsultAI} 
               onShowToast={showToast} 
               isMuted={isMuted}
+              onNavigateTab={switchTab}
             />
           )}
           {activeTab === 'chat' && (
@@ -426,25 +611,90 @@ export default function App() {
           {activeTab === 'crop-doctor' && (
             <CropDoctor 
               onConsultAI={handleConsultAI} 
-              onShowToast={showToast}
+              onShowToast={showToast} 
               isMuted={isMuted}
+              onDetectionComplete={() => {
+                showToast('Specimen and pathology diagnosis saved to Supabase', 'success');
+              }}
             />
           )}
           {activeTab === 'controls' && (
             <FarmControls 
-              onShowToast={showToast}
+              onShowToast={showToast} 
               isMuted={isMuted}
             />
           )}
           {activeTab === 'market' && (
             <MarketPrices 
               onConsultAI={handleConsultAI} 
-              onShowToast={showToast}
+              onShowToast={showToast} 
               isMuted={isMuted}
             />
           )}
         </div>
       </main>
     </div>
+  );
+}
+
+/**
+ * Root Application Router with Session and Route Protection
+ */
+export default function App() {
+  const [showConfigModal, setShowConfigModal] = useState(false);
+
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <SupabaseConfigModal
+          isOpen={showConfigModal}
+          onClose={() => setShowConfigModal(false)}
+        />
+
+        <Routes>
+          {/* Public Auth Routes (Redirect to / if already authenticated) */}
+          <Route 
+            path="/login" 
+            element={
+              <PublicOnlyRoute>
+                <Login onOpenConfigModal={() => setShowConfigModal(true)} />
+              </PublicOnlyRoute>
+            } 
+          />
+          <Route 
+            path="/register" 
+            element={
+              <PublicOnlyRoute>
+                <Register />
+              </PublicOnlyRoute>
+            } 
+          />
+          <Route 
+            path="/forgot-password" 
+            element={
+              <PublicOnlyRoute>
+                <ForgotPassword />
+              </PublicOnlyRoute>
+            } 
+          />
+
+          {/* Password Reset Route (accessible from Supabase recovery email link) */}
+          <Route 
+            path="/reset-password" 
+            element={<ResetPassword />} 
+          />
+
+          {/* Protected Routes (Requires authenticated Supabase session) */}
+          <Route 
+            path="/*" 
+            element={
+              <ProtectedRoute>
+                <PortalDashboard onOpenConfigModal={() => setShowConfigModal(true)} />
+              </ProtectedRoute>
+            } 
+          />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

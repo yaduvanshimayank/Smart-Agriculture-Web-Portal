@@ -265,6 +265,72 @@ The portal has been verified through automated subagent testing suites:
 
 ---
 
+## 🚀 Production Deployment & v0.dev Integration
+
+This portal is structured for unified production hosting (Express + static assets) as well as serverless platforms like **Vercel** and **v0.dev**.
+
+### 1. 🌟 Using with v0.dev (Importing the Project)
+**v0.dev** by Vercel allows importing and editing existing GitHub codebases directly inside the v0 AI workspace:
+
+1. **Push your code to GitHub**:
+   Ensure your changes are committed and pushed to your GitHub repository:
+   ```bash
+   git add .
+   git commit -m "feat: production ready for v0.dev & vercel deployment"
+   git push origin main
+   ```
+
+2. **Open v0.dev**:
+   - Navigate to [https://v0.dev](https://v0.dev) and sign in with your Vercel or GitHub account.
+
+3. **Import from GitHub into v0**:
+   - In the v0 chat composer area, click the **`+` (Add/Import)** menu or the dropdown next to **New Chat**.
+   - Select **Import from…** → **Import from GitHub**.
+   - Select or paste your repository: `yaduvanshimayank/Smart-Agriculture-Web-Portal` (or your GitHub fork).
+   - Set the Root Directory to `/` and click **Import**.
+   - *v0 will load the repository sandbox, allowing you to preview, refine components with AI, or sync pull requests back to GitHub!*
+
+4. **Standalone Component Import in v0**:
+   - You can also paste any individual component (e.g., [`client/src/components/CropDoctor.jsx`](client/src/components/CropDoctor.jsx) or [`client/src/components/Dashboard.jsx`](client/src/components/Dashboard.jsx)) directly into a new v0 prompt to iterate on specific UI modules.
+
+---
+
+### 2. ⚡ Deploying to Vercel
+The repository includes a production-tuned `vercel.json` with SPA client-side routing fallback and serverless Express API function routing:
+
+1. **Deploy with Vercel CLI**:
+   ```bash
+   npx vercel
+   ```
+   Or connect the repository on [vercel.com/new](https://vercel.com/new).
+
+2. **Configure Environment Variables in Vercel Project Settings**:
+   | Variable Name | Required | Description |
+   | :--- | :--- | :--- |
+   | `GROQ_API_KEY` | Yes | Groq API Key for Agronomy AI |
+   | `SUPABASE_URL` | Optional | Supabase Project URL for authentication & profiles |
+   | `SUPABASE_ANON_KEY` | Optional | Supabase Public Anon Key |
+   | `VITE_SUPABASE_URL` | Optional | Exposed to frontend Vite bundle |
+   | `VITE_SUPABASE_ANON_KEY` | Optional | Exposed to frontend Vite bundle |
+
+*(Note: If Supabase keys are omitted, the portal automatically operates in full interactive Guest Operator Demo Mode with 1-click access!)*
+
+---
+
+### 3. 🏭 Running Production Locally / Docker / VPS
+```bash
+# 1. Install all dependencies
+npm run install:all
+
+# 2. Build optimized frontend chunks
+npm run build
+
+# 3. Start unified production Express server (serves API on /api and static client bundle)
+npm start
+```
+
+---
+
 ## 🤝 Acknowledgements & References
 - **ICAR** (Indian Council of Agricultural Research) & **PAU** (Punjab Agricultural University) for agronomic research protocols.
 - **e-NAM** (National Agriculture Market) & State APMC Mandis for commodity benchmark structures.
