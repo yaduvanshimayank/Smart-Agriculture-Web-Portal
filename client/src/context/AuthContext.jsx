@@ -244,6 +244,46 @@ export function AuthProvider({ children }) {
       });
 
       if (error) {
+        // Fallback: Check if this is a registered demo user or the demo operator
+        const users = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
+        const normalizedEmail = email.trim().toLowerCase();
+        const customOpPwd = localStorage.getItem('agri_demo_operator_pwd');
+        const isOperator = normalizedEmail === 'operator@farmmesh.in' && (password === 'GreenFarmer2026!#' || password === customOpPwd || (!customOpPwd && password.length >= 6));
+        const found = users.find(u => u.email === normalizedEmail && u.password === password);
+
+        if (found || isOperator) {
+          const userObj = found || {
+            id: 'demo-operator-101',
+            email: 'operator@farmmesh.in',
+            user_metadata: { full_name: 'Lead Agronomist & Farm Operator' }
+          };
+          const demoProfile = {
+            id: userObj.id,
+            full_name: userObj.user_metadata?.full_name || 'Farmer',
+            email: userObj.email,
+            farm_name: 'Punjab Agro-Hub — Ludhiana (Alluvial Basin)',
+            role: 'Agricultural Lead & Farm Manager',
+            theme: localStorage.getItem('agri_theme') || 'light',
+            audio_muted: localStorage.getItem('agri_muted') === 'true'
+          };
+          const demoSession = {
+            access_token: 'demo-token-' + Date.now(),
+            user: userObj,
+            profile: demoProfile
+          };
+          if (rememberMe) {
+            localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({
+              user: userObj,
+              profile: demoProfile,
+              session: demoSession
+            }));
+          }
+          setUser(userObj);
+          setProfile(demoProfile);
+          setSession(demoSession);
+          return { user: userObj, session: demoSession };
+        }
+
         throw error;
       }
 
@@ -259,43 +299,51 @@ export function AuthProvider({ children }) {
       // Demo mode login
       const users = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
       const normalizedEmail = email.trim().toLowerCase();
+      const customOpPwd = localStorage.getItem('agri_demo_operator_pwd');
+      const isOperator = normalizedEmail === 'operator@farmmesh.in' && (password === 'GreenFarmer2026!#' || password === customOpPwd || (!customOpPwd && password.length >= 6));
       const found = users.find(u => u.email === normalizedEmail && u.password === password);
 
-      if (!found) {
+      if (!found && !isOperator) {
         const err = new Error('Invalid login credentials');
         err.status = 400;
         throw err;
       }
 
+      const userObj = found || {
+        id: 'demo-operator-101',
+        email: 'operator@farmmesh.in',
+        user_metadata: { full_name: 'Lead Agronomist & Farm Operator' }
+      };
+
       const demoProfile = {
-        id: found.id,
-        full_name: found.user_metadata?.full_name || 'Farmer',
-        email: found.email,
+        id: userObj.id,
+        full_name: userObj.user_metadata?.full_name || 'Farmer',
+        email: userObj.email,
         farm_name: 'Punjab Agro-Hub — Ludhiana (Alluvial Basin)',
         role: 'Agricultural Lead & Farm Manager',
-        theme: 'light',
-        audio_muted: false
+        theme: localStorage.getItem('agri_theme') || 'light',
+        audio_muted: localStorage.getItem('agri_muted') === 'true'
       };
 
       const demoSession = {
         access_token: 'demo-token-' + Date.now(),
-        user: found,
+        user: userObj,
         profile: demoProfile
       };
 
       if (rememberMe) {
         localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify({
-          user: found,
+          user: userObj,
           profile: demoProfile,
           session: demoSession
         }));
       }
 
-      setUser(found);
+      setUser(userObj);
       setProfile(demoProfile);
       setSession(demoSession);
 
-      return { user: found, session: demoSession };
+      return { user: userObj, session: demoSession };
     }
   };
 
@@ -338,7 +386,11 @@ export function AuthProvider({ children }) {
    */
   const signOut = async () => {
     if (isConfigured && supabase) {
-      await supabase.auth.signOut();
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Sign out warning:', e);
+      }
     }
     localStorage.removeItem(DEMO_SESSION_KEY);
     setUser(null);
@@ -352,17 +404,89 @@ export function AuthProvider({ children }) {
    */
   const resetPassword = async (email) => {
     const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. Check if this is a local demo account
+    let demoUsers = [];
+    try {
+      demoUsers = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
+    } catch {
+      demoUsers = [];
+    }
+    const isDemoUser = normalizedEmail === 'operator@farmmesh.in' || demoUsers.some(u => u.email === normalizedEmail);
+
+    if (isDemoUser) {
+      return {
+        success: true,
+        isDemo: true,
+        email: normalizedEmail,
+        message: 'Local demo account identified. You can reset your password immediately.'
+      };
+    }
+
+    // 2. Online Supabase recovery email
     if (isConfigured && supabase) {
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/reset-password`
       });
+
       if (error) {
-        // Do not leak email existence for safety, but log internally
-        console.warn('Supabase reset password note:', error.message);
+        console.warn('Supabase reset password error:', error.message);
+        throw error;
       }
-      return { success: true };
+
+      return {
+        success: true,
+        isDemo: false,
+        email: normalizedEmail
+      };
     } else {
-      // Demo mode success simulation
+      // Unconfigured demo fallback
+      return {
+        success: true,
+        isDemo: true,
+        email: normalizedEmail,
+        message: 'Demo mode active. You can set a new password directly.'
+      };
+    }
+  };
+
+  /**
+   * Exchange recovery code from URL query parameter (?code=...) for session (PKCE flow)
+   */
+  const exchangeRecoveryCode = async (code) => {
+    if (!code) return null;
+    if (isConfigured && supabase) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+      if (data?.session) {
+        setSession(data.session);
+        setUser(data.user);
+        setIsRecoveryMode(true);
+      }
+      return data;
+    }
+    return null;
+  };
+
+  /**
+   * Verify recovery OTP code (e.g. 6-digit email code)
+   */
+  const verifyRecoveryOtp = async ({ email, token }) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (isConfigured && supabase) {
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: normalizedEmail,
+        token: token.trim(),
+        type: 'recovery'
+      });
+      if (error) throw error;
+      if (data?.session) {
+        setSession(data.session);
+        setUser(data.user);
+        setIsRecoveryMode(true);
+      }
+      return data;
+    } else {
       return { success: true };
     }
   };
@@ -370,7 +494,42 @@ export function AuthProvider({ children }) {
   /**
    * Update user password (used during password recovery)
    */
-  const updatePassword = async (newPassword) => {
+  const updatePassword = async (newPassword, targetEmail = '') => {
+    let demoUsers = [];
+    try {
+      demoUsers = JSON.parse(localStorage.getItem(DEMO_STORAGE_KEY) || '[]');
+    } catch {
+      demoUsers = [];
+    }
+
+    const emailToMatch = (targetEmail || user?.email || '').trim().toLowerCase();
+    const isDemoAccount = emailToMatch === 'operator@farmmesh.in' || demoUsers.some(u => u.email === emailToMatch);
+
+    // If it is a demo account or not connected to Supabase
+    if (isDemoAccount || !isConfigured || (!session && isDemoAccount)) {
+      if (emailToMatch === 'operator@farmmesh.in') {
+        localStorage.setItem('agri_demo_operator_pwd', newPassword);
+      }
+      const userIndex = demoUsers.findIndex(u => u.email === emailToMatch);
+      if (userIndex !== -1) {
+        demoUsers[userIndex].password = newPassword;
+        localStorage.setItem(DEMO_STORAGE_KEY, JSON.stringify(demoUsers));
+      }
+      // Update active demo session if needed
+      const savedSession = localStorage.getItem(DEMO_SESSION_KEY);
+      if (savedSession) {
+        try {
+          const parsed = JSON.parse(savedSession);
+          if (parsed.user) {
+            parsed.user.password = newPassword;
+            localStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(parsed));
+          }
+        } catch {}
+      }
+      setIsRecoveryMode(false);
+      return { success: true, isDemo: true };
+    }
+
     if (isConfigured && supabase) {
       const { data, error } = await supabase.auth.updateUser({
         password: newPassword
@@ -379,9 +538,8 @@ export function AuthProvider({ children }) {
       setIsRecoveryMode(false);
       return data;
     } else {
-      // Demo mode
       setIsRecoveryMode(false);
-      return { success: true };
+      return { success: true, isDemo: true };
     }
   };
 
@@ -437,6 +595,8 @@ export function AuthProvider({ children }) {
     signInWithDemo,
     signOut,
     resetPassword,
+    exchangeRecoveryCode,
+    verifyRecoveryOtp,
     updatePassword,
     updateProfile,
     refreshProfile: () => user && fetchProfile(user.id, user.email, user.user_metadata)

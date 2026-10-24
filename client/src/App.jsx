@@ -671,11 +671,7 @@ export default function App() {
           />
           <Route 
             path="/forgot-password" 
-            element={
-              <PublicOnlyRoute>
-                <ForgotPassword />
-              </PublicOnlyRoute>
-            } 
+            element={<ForgotPassword />} 
           />
 
           {/* Password Reset Route (accessible from Supabase recovery email link) */}

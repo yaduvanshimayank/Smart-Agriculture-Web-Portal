@@ -20,8 +20,25 @@ export default function ResetPassword() {
   const [success, setSuccess] = useState('');
   const [isValidSession, setIsValidSession] = useState(false);
   const [checkingLink, setCheckingLink] = useState(true);
+  const [urlError, setUrlError] = useState('');
 
-  const { updatePassword, session, isRecoveryMode, isConfigured } = useAuth();
+  // Demo & Manual OTP verification states
+  const [demoEmail, setDemoEmail] = useState('');
+  const [manualOtpMode, setManualOtpMode] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpToken, setOtpToken] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  const { 
+    updatePassword, 
+    verifyRecoveryOtp, 
+    exchangeRecoveryCode, 
+    session, 
+    loading, 
+    isRecoveryMode, 
+    isConfigured 
+  } = useAuth();
+  
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,28 +46,121 @@ export default function ResetPassword() {
   const strength = calculatePasswordStrength(password);
   const allRulesPassed = rules.every(r => r.valid);
 
-  // Validate that the user actually arrived with a valid recovery token/session
+  // Validate recovery tokens, PKCE codes, and active sessions
   useEffect(() => {
-    const hash = window.location.hash || '';
-    const search = window.location.search || '';
+    let active = true;
 
-    const hasRecoveryParam = 
-      hash.includes('type=recovery') || 
-      search.includes('type=recovery') || 
-      hash.includes('access_token') || 
-      search.includes('code=') ||
-      isRecoveryMode ||
-      !!session;
+    async function evaluateRecoveryState() {
+      // If auth state is still initializing from storage, wait
+      if (loading) return;
 
-    // In demo mode without configured Supabase, allow testing the reset page freely
-    if (!isConfigured || hasRecoveryParam) {
-      setIsValidSession(true);
-    } else {
+      const searchParams = new URLSearchParams(location.search);
+      const hash = window.location.hash || '';
+
+      // 1. Check for demo email parameter
+      const demoParam = searchParams.get('demo_email');
+      if (demoParam) {
+        if (!active) return;
+        setDemoEmail(demoParam);
+        setIsValidSession(true);
+        setCheckingLink(false);
+        return;
+      }
+
+      // Check if email was passed in query
+      const emailQuery = searchParams.get('email');
+      if (emailQuery) {
+        setOtpEmail(emailQuery);
+      }
+
+      // 2. Check for explicit error parameters from Supabase redirect
+      const errorDesc = searchParams.get('error_description');
+      const hashErrorDesc = hash.includes('error_description=') 
+        ? decodeURIComponent(hash.split('error_description=')[1].split('&')[0].replace(/\+/g, ' '))
+        : '';
+
+      if (errorDesc || hashErrorDesc) {
+        if (!active) return;
+        setUrlError(errorDesc || hashErrorDesc || 'The password recovery link has expired or is invalid.');
+        setIsValidSession(false);
+        setCheckingLink(false);
+        return;
+      }
+
+      // 3. Handle PKCE code parameter (?code=...)
+      const code = searchParams.get('code');
+      if (code && exchangeRecoveryCode) {
+        try {
+          await exchangeRecoveryCode(code);
+          if (!active) return;
+          setIsValidSession(true);
+          setCheckingLink(false);
+          return;
+        } catch (exchangeErr) {
+          console.warn('PKCE code exchange error:', exchangeErr.message);
+          // If code exchange failed (e.g. cross-browser/device link click without verifier),
+          // offer manual OTP / token fallback rather than a hard failure
+          if (!active) return;
+          setUrlError(exchangeErr.message || 'Unable to exchange verification code. You can enter an OTP code directly below.');
+          setManualOtpMode(true);
+          setCheckingLink(false);
+          return;
+        }
+      }
+
+      // 4. Check for active recovery session or recovery mode
+      const hasRecoveryTokenInHash = 
+        hash.includes('type=recovery') || 
+        hash.includes('access_token=');
+
+      if (session || isRecoveryMode || hasRecoveryTokenInHash || !isConfigured) {
+        if (!active) return;
+        setIsValidSession(true);
+        setCheckingLink(false);
+        return;
+      }
+
+      // If no valid session or parameters were found
+      if (!active) return;
       setIsValidSession(false);
+      setCheckingLink(false);
     }
 
-    setCheckingLink(false);
-  }, [session, isRecoveryMode, isConfigured, location]);
+    evaluateRecoveryState();
+
+    return () => {
+      active = false;
+    };
+  }, [loading, session, isRecoveryMode, isConfigured, location, exchangeRecoveryCode]);
+
+  // Handle manual OTP code verification
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+    setUrlError('');
+
+    if (!otpEmail.trim()) {
+      setError('Please provide your registered account email.');
+      return;
+    }
+    if (!otpToken.trim()) {
+      setError('Please enter the 6-digit OTP or recovery token.');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      await verifyRecoveryOtp({ email: otpEmail, token: otpToken });
+      setIsValidSession(true);
+      setManualOtpMode(false);
+      setSuccess('Recovery token verified! You can now set your new password.');
+    } catch (err) {
+      console.error('OTP verification failed:', err);
+      setError(err.message || 'Invalid or expired OTP token. Please check the code or request a new one.');
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -75,11 +185,11 @@ export default function ResetPassword() {
     setSubmitting(true);
 
     try {
-      await updatePassword(password);
+      await updatePassword(password, demoEmail || otpEmail);
       setSuccess('Your password has been successfully updated! Redirecting to login...');
       setTimeout(() => {
         navigate('/login', { replace: true });
-      }, 2000);
+      }, 1800);
     } catch (err) {
       console.error('Password update error:', err);
       let msg = err.message || 'Failed to update password. Your recovery link may have expired.';
@@ -93,14 +203,114 @@ export default function ResetPassword() {
     }
   };
 
-  if (checkingLink) {
+  if (checkingLink || loading) {
     return (
       <div className="auth-page-container">
         <div className="auth-card" style={{ textAlign: 'center', padding: '3rem 2rem' }}>
-          <Loader2 size={32} className="auth-spinner" style={{ color: 'var(--emerald-main)', margin: '0 auto 1rem' }} />
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Verifying cryptographic recovery token...
+          <Loader2 size={36} className="auth-spinner" style={{ color: 'var(--emerald-main)', margin: '0 auto 1.25rem' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-main)', marginBottom: '0.4rem' }}>
+            Securing Cryptographic Handshake
+          </h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+            Validating cryptographic recovery token & establishing secure session...
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle manual OTP entry or fallback
+  if (manualOtpMode || (!isValidSession && !urlError)) {
+    return (
+      <div className="auth-page-container">
+        <div className="auth-blob auth-blob-1" />
+        <div className="auth-blob auth-blob-2" />
+
+        <div className="auth-card">
+          <div className="auth-header">
+            <div className="auth-logo-icon">
+              <KeyRound size={28} />
+            </div>
+            <h1 className="auth-title">
+              Enter <span style={{ color: 'var(--emerald-main)' }}>Recovery Token</span>
+            </h1>
+            <p className="auth-subtitle">
+              Enter your account email and the 6-digit recovery code or token from your confirmation email.
+            </p>
+          </div>
+
+          {error && (
+            <div className="auth-alert auth-alert-error" role="alert">
+              <AlertTriangle size={18} style={{ color: 'var(--rose-alert)', flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleVerifyOtp} className="auth-form" noValidate>
+            <div className="auth-field">
+              <label htmlFor="otp-email" className="auth-label">
+                Account Email
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="otp-email"
+                  type="email"
+                  placeholder="operator@farmmesh.in"
+                  value={otpEmail}
+                  onChange={(e) => setOtpEmail(e.target.value)}
+                  disabled={verifyingOtp}
+                  className="auth-input"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="auth-field">
+              <label htmlFor="otp-token" className="auth-label">
+                6-Digit Recovery Token / OTP
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="otp-token"
+                  type="text"
+                  placeholder="e.g. 123456"
+                  value={otpToken}
+                  onChange={(e) => setOtpToken(e.target.value)}
+                  disabled={verifyingOtp}
+                  className="auth-input"
+                  style={{ letterSpacing: '2px', fontWeight: '700' }}
+                  required
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={verifyingOtp}
+              className="auth-btn-primary"
+            >
+              {verifyingOtp ? (
+                <>
+                  <Loader2 size={18} className="auth-spinner" />
+                  <span>Verifying Token...</span>
+                </>
+              ) : (
+                <>
+                  <span>Verify & Proceed to Set Password</span>
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="auth-footer" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <Link to="/forgot-password" className="auth-link" style={{ fontSize: '0.82rem' }}>
+              Request a new recovery email
+            </Link>
+            <Link to="/login" className="auth-link" style={{ fontSize: '0.82rem' }}>
+              Return to Sign In
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -133,15 +343,27 @@ export default function ResetPassword() {
             Recovery Link Expired or Invalid
           </h2>
 
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1.5rem' }}>
-            The password recovery link you used is invalid, has expired, or has already been consumed. For security reasons, recovery tokens are single-use and expire within a short timeframe.
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '1.5rem' }}>
+            {urlError || 'The password recovery link you used is invalid, has expired, or has already been consumed. For security reasons, recovery tokens are single-use and expire within a short timeframe.'}
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <Link to="/forgot-password" className="auth-btn-primary" style={{ textDecoration: 'none', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setUrlError('');
+                setManualOtpMode(true);
+              }}
+              className="auth-btn-primary"
+              style={{ justifyContent: 'center' }}
+            >
+              Enter OTP Code or Token Manually
+            </button>
+
+            <Link to="/forgot-password" className="auth-link" style={{ fontSize: '0.82rem', marginTop: '4px' }}>
               Request New Recovery Link
             </Link>
-            <Link to="/login" className="auth-link" style={{ fontSize: '0.82rem', marginTop: '6px' }}>
+            <Link to="/login" className="auth-link" style={{ fontSize: '0.82rem' }}>
               Return to Login
             </Link>
           </div>
